@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <!-- เปลี่ยนชื่อเว็บที่แสดงบนแท็บเบราว์เซอร์ตรงนี้ -->
     <title>Student Voice</title>
     
     <!-- Tailwind CSS -->
@@ -44,12 +43,11 @@
     <div id="root"></div>
 
     <script type="text/babel">
+        // ดึงฟังก์ชันของ React มาใช้แบบไม่ต้อง import
         const { useState, useEffect, useRef } = React;
 
         function App() {
-            // ==========================================
-            // ลิงก์ URL ของ Google Apps Script (Backend)
-            // ==========================================
+            // URL ของ Google Apps Script ที่ภีมสร้างไว้
             const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoagjo7kQFW8iZWfZtTRYYb1_jD0lPwow3DvfE-ctz8nnFnHndnjknxlhjZLz-dEIR/exec"; 
 
             const [currentView, setCurrentView] = useState('home');
@@ -60,12 +58,14 @@
             const clickTimeoutRef = useRef(null);
 
             useEffect(() => {
+                // ข้อมูลตัวอย่างตอนเปิดเว็บใหม่ๆ
                 setTickets([
                     { id: 'KM-2026-0001', type: 'issue', category: 'สถานที่', status: 'pending', date: '2026-08-11', title: 'แอร์ห้อง ม.5/2 ไม่เย็น', details: 'เปิดแล้วมีแต่ลมร้อนออกมา', location: 'อาคาร 2 ชั้น 3', images: [] },
                     { id: 'KM-2026-0002', type: 'safety', category: 'Bullying', status: 'investigating', date: '2026-08-10', title: 'มีกลุ่มนักเรียนรีดไถเงินที่หลังโรงอาหาร', details: 'เห็นเหตุการณ์ช่วงพักเที่ยง', location: 'หลังโรงอาหาร', images: [] }
                 ]);
             }, []);
 
+            // ระบบซ่อนแอดมิน (กด 5 ครั้ง)
             const handleLogoClick = () => {
                 setLogoClicks((prev) => prev + 1);
                 if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
@@ -87,10 +87,12 @@
                 return `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
             };
 
+            // ฟังก์ชันส่งข้อมูลไปหลังบ้าน
             const submitTicket = async (data) => {
                 const newId = generateTrackingId();
                 const payload = { ...data, id: newId };
 
+                // อัปเดตหน้าบ้านให้เห็นทันที
                 const newTicket = {
                     id: newId,
                     status: 'pending',
@@ -100,15 +102,17 @@
                 };
                 setTickets(prev => [newTicket, ...prev]);
 
-                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
+                // ส่งไป Google Sheets
+                if (GOOGLE_SCRIPT_URL) {
                     try {
+                        // ใช้ fetch แบบธรรมดา ส่งเป็น text/plain เลี่ยงปัญหา CORS
                         fetch(GOOGLE_SCRIPT_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify(payload)
                         }).then(res => res.json())
-                          .then(resData => console.log("Success:", resData))
-                          .catch(err => console.error("Error connecting to backend:", err));
+                          .then(resData => console.log("บันทึกสำเร็จ:", resData))
+                          .catch(err => console.error("ส่งข้อมูลไม่สำเร็จ:", err));
                     } catch (error) {
                         console.error("Fetch Error:", error);
                     }
@@ -230,7 +234,7 @@
 
                     <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-sm flex items-start gap-3">
                         <div className="mt-1 text-[#6B7280]">
-                            <i className="ph ph-shield-warning text-[20px]"></i>
+                            <i className="ph ph-shield-check text-[20px]"></i>
                         </div>
                         <div>
                             <h3 className="font-bold text-[#1F2937] mb-1">ความเป็นส่วนตัวของคุณคือสิ่งสำคัญ</h3>
@@ -938,7 +942,7 @@
 
                 return (
                     <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-4">
-                        <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-[#E5E7EB]">
+                        <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-[#E5E7EB] animate-in zoom-in-95">
                             <div className="w-16 h-16 bg-[#C8102E] rounded-2xl mx-auto flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-6">KM</div>
                             <h2 className="text-2xl font-bold text-center text-[#1F2937] mb-2">เข้าสู่ระบบผู้ดูแล</h2>
                             <p className="text-center text-[#6B7280] mb-8 text-sm">พิมพ์อะไรก็ได้เพื่อทดสอบ (เช่น admin / 1234)</p>
