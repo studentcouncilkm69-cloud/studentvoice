@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STUDENT COUNCIL • KHAMMUANG SCHOOL</title>
+    <!-- เปลี่ยนชื่อเว็บที่แสดงบนแท็บเบราว์เซอร์ตรงนี้ -->
+    <title>Student Voice</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -47,7 +48,7 @@
 
         function App() {
             // ==========================================
-            // ลิงก์นี้ดึงมาจากรูปของภีม ใส่ให้เรียบร้อยแล้ว!
+            // ลิงก์ URL ของ Google Apps Script (Backend)
             // ==========================================
             const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoagjo7kQFW8iZWfZtTRYYb1_jD0lPwow3DvfE-ctz8nnFnHndnjknxlhjZLz-dEIR/exec"; 
 
@@ -393,7 +394,7 @@
                                     </div>
                                     <div className="flex items-center gap-3 mb-8 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
                                         <input type="checkbox" id="anonymous" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 accent-[#C8102E] rounded" />
-                                        <label htmlFor="anonymous" className="text-sm text-[#4B5563] cursor-pointer">บันทึกแบบไม่เปิดเผยตัวตน</label>
+                                        <label htmlFor="anonymous" className="text-sm text-[#4B5563] cursor-pointer">บันทึกแบบไม่เปิดเผยตัวตน (Anonymous)</label>
                                     </div>
                                     <button onClick={handleSubmit} className="w-full bg-[#C8102E] hover:bg-[#9E0B23] text-white font-bold py-3.5 rounded-xl shadow-md transition-colors">บันทึกความรู้สึก</button>
                                 </div>
@@ -472,6 +473,7 @@
                                         <div><span className="text-[#6B7280] block mb-1">หมวดหมู่</span><span className="font-semibold text-[#9333EA]">{formData.category || '-'}</span></div>
                                         <div><span className="text-[#6B7280] block mb-1">ประเภท</span><span className="font-medium">{formData.feedbackType || '-'}</span></div>
                                         <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
+                                        <div><span className="text-[#6B7280] block mb-1">การระบุตัวตน</span><span className="font-medium">{formData.isAnonymous ? 'ไม่เปิดเผย' : 'เปิดเผย'}</span></div>
                                     </div>
                                 </div>
                             )}
@@ -560,6 +562,7 @@
                                     <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
                                     <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
                                         <div><span className="text-[#6B7280] block mb-1">เหตุการณ์</span><span className="font-bold text-[#DC2626]">{formData.category || '-'}</span></div>
+                                        <div><span className="text-[#6B7280] block mb-1">ผู้ได้รับผลกระทบ</span><span className="font-medium">{formData.affected || '-'}</span></div>
                                         <div><span className="text-[#6B7280] block mb-1">สถานที่</span><span className="font-medium">{formData.location || '-'}</span></div>
                                         <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
                                     </div>
@@ -764,7 +767,7 @@
                         </div>
                         <div className="flex gap-3 mt-6">
                             {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
-                            {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={step === 1 && !formData.category} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading || (formData.contactBack && !formData.contactInfo)} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl shadow-md">{isLoading ? 'กำลังส่ง...' : 'ยืนยันขอความช่วยเหลือ'}</button>}
+                            {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={step === 1 && !formData.category} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading || (formData.contactBack && !formData.contactInfo)} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl shadow-md">ยืนยันขอความช่วยเหลือ</button>}
                         </div>
                     </div>
                 );
@@ -819,7 +822,7 @@
                                     </div>
                                     <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
                                         <input type="checkbox" id="anonIdea" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#CA8A04] rounded" />
-                                        <label htmlFor="anonIdea" className="text-sm text-[#4B5563] cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                        <label htmlFor="anonIdea" className="text-sm cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
                                     </div>
                                 </div>
                             )}
@@ -940,8 +943,8 @@
                             <h2 className="text-2xl font-bold text-center text-[#1F2937] mb-2">เข้าสู่ระบบผู้ดูแล</h2>
                             <p className="text-center text-[#6B7280] mb-8 text-sm">พิมพ์อะไรก็ได้เพื่อทดสอบ (เช่น admin / 1234)</p>
                             <form onSubmit={handleLogin} className="space-y-4">
-                                <input type="text" required placeholder="ชื่อผู้ใช้" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-[#C8102E]" />
-                                <input type="password" required placeholder="รหัสผ่าน" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-[#C8102E]" />
+                                <input type="text" required placeholder="ชื่อผู้ใช้" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-[#C8102E] transition-all" />
+                                <input type="password" required placeholder="รหัสผ่าน" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-[#C8102E] transition-all" />
                                 <button type="submit" className="w-full bg-[#1F2937] hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors shadow-md mt-6">เข้าสู่ระบบ</button>
                                 <button type="button" onClick={() => setCurrentView('home')} className="w-full text-sm text-[#6B7280] hover:text-[#C8102E] py-2 mt-2">กลับหน้าหลัก</button>
                             </form>
@@ -1046,7 +1049,5 @@
     </script>
 </body>
 </html>
-
-
 
 
