@@ -93,6 +93,26 @@
             );
         };
 
+        // --- Custom Alert (ป๊อปอัพแจ้งเตือนแทนการใช้ alert() แบบเก่า) ---
+        const CustomAlert = ({ config, onClose }) => {
+            if (!config.isOpen) return null;
+            const isError = config.type === 'error';
+            const isSuccess = config.type === 'success';
+            
+            return (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 modal-overlay animate-in fade-in">
+                    <div className="bg-white rounded-3xl w-full max-w-xs p-6 shadow-2xl text-center animate-in zoom-in-95">
+                        <div className={`w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 ${isError ? 'bg-red-50 text-red-600' : isSuccess ? 'bg-green-50 text-green-600' : 'bg-blue-50 text-blue-600'}`}>
+                            <i className={`ph text-4xl ${isError ? 'ph-x-circle' : isSuccess ? 'ph-check-circle' : 'ph-info'}`}></i>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{isError ? 'เกิดข้อผิดพลาด' : isSuccess ? 'สำเร็จ' : 'แจ้งเตือน'}</h3>
+                        <p className="text-sm text-gray-500 mb-6">{config.message}</p>
+                        <button onClick={onClose} className="w-full py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition-colors shadow-md">ตกลง</button>
+                    </div>
+                </div>
+            );
+        };
+
         const SuccessScreen = ({ id, backTo = "home", message = "ส่งข้อมูลเรียบร้อยแล้ว", navigateTo }) => {
             const [copied, setCopied] = useState(false);
             const handleCopy = () => {
@@ -185,7 +205,6 @@
             </div>
         );
 
-        // ... (หน้าฟอร์ม Feeling, Feedback, Issue, Safety, Counseling, Idea ย่อไว้เพื่อโฟกัสส่วนที่แก้ไข) ...
         const FeelingView = ({ navigateTo, submitTicket }) => {
             const [selectedFeeling, setSelectedFeeling] = useState(null);
             const [selectedFactors, setSelectedFactors] = useState([]);
@@ -234,56 +253,155 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', feedbackType: '', details: '', isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
+            const color = "#9333EA";
             const categories = ['การเรียน', 'ครู', 'เพื่อน', 'กิจกรรม', 'สถานที่', 'อาหาร', 'ความสะอาด', 'ความปลอดภัย', 'เทคโนโลยี', 'กฎระเบียบ', 'สภานักเรียน', 'อื่น ๆ'];
             const feedbackTypes = ['ชื่นชม', 'ข้อเสนอแนะ', 'ปัญหา', 'สิ่งที่อยากให้ปรับปรุง'];
 
-            const handleSubmit = async () => { const id = await submitTicket({ type: 'feedback', title: `[${formData.feedbackType}] ${formData.category}`, ...formData }); setTrackingId(id); setStep(5); };
+            const handleSubmit = async () => {
+                const id = await submitTicket({ type: 'feedback', title: `[${formData.feedbackType}] ${formData.category}`, ...formData });
+                setTrackingId(id); setStep(5);
+            };
+
             if (step === 5) return <SuccessScreen id={trackingId} message="ส่งความคิดเห็นเรียบร้อยแล้ว" navigateTo={navigateTo} />;
 
             return (
                 <div className="p-4 py-6">
                     <button onClick={() => navigateTo('home')} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]"><i className="ph ph-caret-left"></i> กลับหน้าหลัก</button>
-                    <div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600"><i className="ph ph-chat-teardrop-text text-[22px] ph-fill"></i></div><h2 className="text-xl font-bold">แสดงความคิดเห็น</h2></div>
-                    <ProgressSteps total={4} current={step} color="#9333EA" />
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600"><i className="ph ph-chat-teardrop-text text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl font-bold">แสดงความคิดเห็น</h2>
+                    </div>
+                    <ProgressSteps total={4} current={step} color={color} />
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
-                        {step === 1 && (<div className="animate-in fade-in"><h3 className="font-bold mb-4">เรื่องใดที่ต้องการแสดงความเห็น?</h3><div className="grid grid-cols-2 gap-3">{categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-3 rounded-xl border text-sm ${formData.category === c ? 'border-purple-600 bg-purple-50 text-purple-600 font-bold' : 'bg-white'}`}>{c}</button>)}</div></div>)}
-                        {step === 2 && (<div className="animate-in fade-in"><h3 className="font-bold mb-4">ประเภทความเห็น</h3><div className="flex flex-col gap-3">{feedbackTypes.map(t => <button key={t} onClick={() => setFormData({...formData, feedbackType: t})} className={`p-4 rounded-xl border text-left text-sm ${formData.feedbackType === t ? 'border-purple-600 bg-purple-50 text-purple-600 font-bold' : 'bg-white'}`}>{t}</button>)}</div></div>)}
-                        {step === 3 && (<div className="animate-in fade-in space-y-4"><h3 className="font-bold mb-3">รายละเอียด</h3><textarea placeholder="พิมพ์ความคิดเห็นของคุณที่นี่..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-purple-600 min-h-[150px]"></textarea><div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border"><input type="checkbox" id="anon" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-purple-600 rounded" /><label htmlFor="anon" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label></div></div>)}
-                        {step === 4 && (<div className="animate-in fade-in space-y-4"><h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3><div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3"><div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-purple-600">{formData.category}</span></div><div><span className="text-gray-500 block">ประเภท</span><span className="font-medium">{formData.feedbackType}</span></div><div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div></div></div>)}
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold mb-4">เรื่องใดที่ต้องการแสดงความเห็น?</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-3 rounded-xl border text-sm ${formData.category === c ? 'border-purple-600 bg-purple-50 text-purple-600 font-bold' : 'bg-white'}`}>{c}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold mb-4">ประเภทความเห็น</h3>
+                                <div className="flex flex-col gap-3">
+                                    {feedbackTypes.map(t => <button key={t} onClick={() => setFormData({...formData, feedbackType: t})} className={`p-4 rounded-xl border text-left text-sm ${formData.feedbackType === t ? 'border-purple-600 bg-purple-50 text-purple-600 font-bold' : 'bg-white'}`}>{t}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <h3 className="font-bold mb-3">รายละเอียด</h3>
+                                <textarea placeholder="พิมพ์ความคิดเห็นของคุณที่นี่..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-purple-600 min-h-[150px]"></textarea>
+                                <div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border">
+                                    <input type="checkbox" id="anon" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-purple-600 rounded" />
+                                    <label htmlFor="anon" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                </div>
+                            </div>
+                        )}
+                        {step === 4 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3">
+                                    <div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-purple-600">{formData.category}</span></div>
+                                    <div><span className="text-gray-500 block">ประเภท</span><span className="font-medium">{formData.feedbackType}</span></div>
+                                    <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-3 mt-6 pb-4">
                         {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-gray-600 bg-white font-medium">ย้อนกลับ</button>}
-                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step===1&&!formData.category)||(step===2&&!formData.feedbackType)||(step===3&&!formData.details)} className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> : <button onClick={handleSubmit} className="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl shadow-md">ส่งความคิดเห็น</button>}
+                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step===1&&!formData.category)||(step===2&&!formData.feedbackType)||(step===3&&!formData.details)} className="flex-1 bg-purple-600 disabled:bg-purple-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> 
+                        : <button onClick={handleSubmit} className="flex-1 bg-purple-600 text-white font-bold py-3 rounded-xl shadow-md">ส่งความคิดเห็น</button>}
                     </div>
                 </div>
             );
         };
 
-        const IssueReportView = ({ navigateTo, submitTicket }) => {
+        const IssueReportView = ({ navigateTo, submitTicket, showAlert }) => {
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', location: '', details: '', isAnonymous: true, images: [] });
             const [trackingId, setTrackingId] = useState(null);
+            const color = "#EA580C"; 
             const categories = ['ห้องน้ำ', 'โรงอาหาร', 'ไฟฟ้า/น้ำ', 'อาคารเรียน', 'อุปกรณ์ชำรุด', 'ความสะอาด', 'อื่นๆ'];
 
-            const handleImageUpload = (e) => { const files = Array.from(e.target.files); if (files.length + formData.images.length > 3) return alert("อัปโหลดได้สูงสุด 3 รูป"); files.forEach(file => { const r = new FileReader(); r.onloadend = () => setFormData(p => ({ ...p, images: [...p.images, r.result] })); r.readAsDataURL(file); }); };
-            const handleSubmit = async () => { const id = await submitTicket({ type: 'issue', title: `[แจ้งปัญหา] ${formData.category}`, ...formData }); setTrackingId(id); setStep(5); };
+            const handleImageUpload = (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length + formData.images.length > 3) {
+                    showAlert("อัปโหลดได้สูงสุด 3 รูป", "error");
+                    return;
+                }
+                files.forEach(file => { const r = new FileReader(); r.onloadend = () => setFormData(p => ({ ...p, images: [...p.images, r.result] })); r.readAsDataURL(file); });
+            };
+
+            const handleSubmit = async () => {
+                const id = await submitTicket({ type: 'issue', title: `[แจ้งปัญหา] ${formData.category}`, ...formData });
+                setTrackingId(id); setStep(5);
+            };
 
             if (step === 5) return <SuccessScreen id={trackingId} message="แจ้งปัญหาเรียบร้อยแล้ว" navigateTo={navigateTo} />;
 
             return (
                 <div className="p-4 py-6">
                     <button onClick={() => navigateTo('home')} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]"><i className="ph ph-caret-left"></i> กลับหน้าหลัก</button>
-                    <div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600"><i className="ph ph-clipboard-text text-[22px] ph-fill"></i></div><h2 className="text-xl font-bold">แจ้งซ่อม/ปัญหา</h2></div>
-                    <ProgressSteps total={4} current={step} color="#EA580C" />
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600"><i className="ph ph-clipboard-text text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl font-bold">แจ้งซ่อม/ปัญหา</h2>
+                    </div>
+                    <ProgressSteps total={4} current={step} color={color} />
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
-                        {step === 1 && (<div className="animate-in fade-in"><h3 className="font-bold mb-4">ปัญหาเกี่ยวกับอะไร?</h3><div className="grid grid-cols-2 gap-3">{categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-3 rounded-xl border text-sm ${formData.category === c ? 'border-orange-600 bg-orange-50 text-orange-600 font-bold' : 'bg-white'}`}>{c}</button>)}</div></div>)}
-                        {step === 2 && (<div className="animate-in fade-in"><h3 className="font-bold mb-4">ระบุสถานที่</h3><input type="text" placeholder="เช่น อาคาร 3 ห้องน้ำหญิง" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-orange-600" /></div>)}
-                        {step === 3 && (<div className="animate-in fade-in space-y-4"><h3 className="font-bold mb-2">รายละเอียดปัญหา</h3><textarea placeholder="อธิบายปัญหาที่พบ..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[100px] focus:outline-none focus:border-orange-600"></textarea><label className="block font-bold text-sm">แนบรูปภาพ (สูงสุด 3 รูป)</label><label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"><i className="ph ph-image text-3xl text-gray-400 mb-2"></i><span className="text-sm font-medium text-gray-500">คลิกเพื่ออัปโหลดรูปภาพ</span><input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" /></label><div className="flex gap-2 mt-2">{formData.images.map((img, i) => (<div key={i} className="relative w-16 h-16"><img src={img} className="w-full h-full object-cover rounded-lg border" /><button onClick={()=>setFormData(p=>({...p, images: p.images.filter((_,idx)=>idx!==i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"><i className="ph ph-x text-xs"></i></button></div>))}</div><div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border mt-4"><input type="checkbox" id="anon2" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-orange-600 rounded" /><label htmlFor="anon2" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label></div></div>)}
-                        {step === 4 && (<div className="animate-in fade-in space-y-4"><h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3><div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3"><div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-orange-600">{formData.category}</span></div><div><span className="text-gray-500 block">สถานที่</span><span className="font-medium">{formData.location || '-'}</span></div><div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div></div></div>)}
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold mb-4">ปัญหาเกี่ยวกับอะไร?</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-3 rounded-xl border text-sm ${formData.category === c ? 'border-orange-600 bg-orange-50 text-orange-600 font-bold' : 'bg-white'}`}>{c}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold mb-4">ระบุสถานที่</h3>
+                                {/* เปลี่ยน Placeholder ตามที่ต้องการ */}
+                                <input type="text" placeholder="เช่น อาคาร 1 ห้องน้ำชาย" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-orange-600" />
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <h3 className="font-bold mb-2">รายละเอียดปัญหา</h3>
+                                <textarea placeholder="อธิบายปัญหาที่พบ..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[100px] focus:outline-none focus:border-orange-600"></textarea>
+                                
+                                <label className="block font-bold text-sm">แนบรูปภาพ (สูงสุด 3 รูป)</label>
+                                <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                                    <i className="ph ph-image text-3xl text-gray-400 mb-2"></i><span className="text-sm font-medium text-gray-500">คลิกเพื่ออัปโหลดรูปภาพ</span>
+                                    <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                                </label>
+                                <div className="flex gap-2 mt-2">
+                                    {formData.images.map((img, i) => (
+                                        <div key={i} className="relative w-16 h-16"><img src={img} className="w-full h-full object-cover rounded-lg border" /><button onClick={()=>setFormData(p=>({...p, images: p.images.filter((_,idx)=>idx!==i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"><i className="ph ph-x text-xs"></i></button></div>
+                                    ))}
+                                </div>
+                                <div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border mt-4">
+                                    <input type="checkbox" id="anon2" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-orange-600 rounded" />
+                                    <label htmlFor="anon2" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                </div>
+                            </div>
+                        )}
+                        {step === 4 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3">
+                                    <div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-orange-600">{formData.category}</span></div>
+                                    <div><span className="text-gray-500 block">สถานที่</span><span className="font-medium">{formData.location || '-'}</span></div>
+                                    <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-3 mt-6 pb-4">
                         {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-gray-600 bg-white font-medium">ย้อนกลับ</button>}
-                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step===1&&!formData.category)||(step===2&&!formData.location)||(step===3&&!formData.details)} className="flex-1 bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> : <button onClick={handleSubmit} className="flex-1 bg-orange-600 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันแจ้งปัญหา</button>}
+                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step===1&&!formData.category)||(step===2&&!formData.location)||(step===3&&!formData.details)} className="flex-1 bg-orange-600 disabled:bg-orange-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> 
+                        : <button onClick={handleSubmit} className="flex-1 bg-orange-600 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันแจ้งปัญหา</button>}
                     </div>
                 </div>
             );
@@ -293,27 +411,68 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', affected: '', location: '', details: '', isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
+            const color = "#DC2626"; 
+
             const categories = ['อุบัติเหตุ', 'ทะเลาะวิวาท', 'บูลลี่/คุกคาม', 'บุคคลภายนอกบุกรุก', 'สิ่งเสพติด', 'อื่นๆ'];
             const affectedTypes = ['ตัวฉันเอง', 'เพื่อน', 'ผู้อื่น', 'พบเห็นเหตุการณ์'];
 
-            const handleSubmit = async () => { const id = await submitTicket({ type: 'safety', title: `[ความปลอดภัย] ${formData.category}`, priority: 'ด่วน', ...formData }); setTrackingId(id); setStep(5); };
+            const handleSubmit = async () => {
+                const id = await submitTicket({ type: 'safety', title: `[ความปลอดภัย] ${formData.category}`, priority: 'ด่วน', ...formData });
+                setTrackingId(id); setStep(5);
+            };
 
             if (step === 5) return <SuccessScreen id={trackingId} message="แจ้งเหตุความปลอดภัยเรียบร้อยแล้ว" navigateTo={navigateTo} />;
 
             return (
                 <div className="p-4 py-6">
                     <button onClick={() => navigateTo('home')} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]"><i className="ph ph-caret-left"></i> กลับหน้าหลัก</button>
-                    <div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600"><i className="ph ph-shield-warning text-[22px] ph-fill"></i></div><h2 className="text-xl font-bold">แจ้งเหตุความปลอดภัย</h2></div>
-                    <ProgressSteps total={4} current={step} color="#DC2626" />
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600"><i className="ph ph-shield-warning text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl font-bold">แจ้งเหตุความปลอดภัย</h2>
+                    </div>
+                    <ProgressSteps total={4} current={step} color={color} />
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
-                        {step === 1 && (<div className="animate-in fade-in"><h3 className="font-bold mb-4">เกิดเหตุการณ์อะไรขึ้น?</h3><div className="grid grid-cols-2 gap-3">{categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-3 rounded-xl border text-sm ${formData.category === c ? 'border-red-600 bg-red-50 text-red-600 font-bold' : 'bg-white'}`}>{c}</button>)}</div></div>)}
-                        {step === 2 && (<div className="animate-in fade-in"><h3 className="font-bold mb-4">ผู้ที่ได้รับผลกระทบ</h3><div className="flex flex-col gap-3">{affectedTypes.map(t => <button key={t} onClick={() => setFormData({...formData, affected: t})} className={`p-4 rounded-xl border text-left text-sm ${formData.affected === t ? 'border-red-600 bg-red-50 text-red-600 font-bold' : 'bg-white'}`}>{t}</button>)}</div></div>)}
-                        {step === 3 && (<div className="animate-in fade-in space-y-4"><div><h3 className="font-bold mb-2">สถานที่เกิดเหตุ</h3><input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-red-600" /></div><div><h3 className="font-bold mb-2">อธิบายเหตุการณ์</h3><textarea value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[100px] focus:outline-none focus:border-red-600"></textarea></div><div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border"><input type="checkbox" id="anon3" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-red-600 rounded" /><label htmlFor="anon3" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label></div></div>)}
-                        {step === 4 && (<div className="animate-in fade-in space-y-4"><h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3><div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3"><div><span className="text-gray-500 block">เหตุการณ์</span><span className="font-bold text-red-600">{formData.category}</span></div><div><span className="text-gray-500 block">ผลกระทบ</span><span className="font-medium">{formData.affected}</span></div><div><span className="text-gray-500 block">สถานที่ & รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.location} - {formData.details}</span></div></div></div>)}
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold mb-4">เกิดเหตุการณ์อะไรขึ้น?</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-3 rounded-xl border text-sm ${formData.category === c ? 'border-red-600 bg-red-50 text-red-600 font-bold' : 'bg-white'}`}>{c}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold mb-4">ผู้ที่ได้รับผลกระทบ</h3>
+                                <div className="flex flex-col gap-3">
+                                    {affectedTypes.map(t => <button key={t} onClick={() => setFormData({...formData, affected: t})} className={`p-4 rounded-xl border text-left text-sm ${formData.affected === t ? 'border-red-600 bg-red-50 text-red-600 font-bold' : 'bg-white'}`}>{t}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <div><h3 className="font-bold mb-2">สถานที่เกิดเหตุ</h3><input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-red-600" /></div>
+                                <div><h3 className="font-bold mb-2">อธิบายเหตุการณ์</h3><textarea value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[100px] focus:outline-none focus:border-red-600"></textarea></div>
+                                <div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border">
+                                    <input type="checkbox" id="anon3" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-red-600 rounded" />
+                                    <label htmlFor="anon3" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                </div>
+                            </div>
+                        )}
+                        {step === 4 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3">
+                                    <div><span className="text-gray-500 block">เหตุการณ์</span><span className="font-bold text-red-600">{formData.category}</span></div>
+                                    <div><span className="text-gray-500 block">ผลกระทบ</span><span className="font-medium">{formData.affected}</span></div>
+                                    <div><span className="text-gray-500 block">สถานที่ & รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.location} - {formData.details}</span></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-3 mt-6 pb-4">
                         {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-gray-600 bg-white font-medium">ย้อนกลับ</button>}
-                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step===1&&!formData.category)||(step===2&&!formData.affected)||(step===3&&(!formData.location||!formData.details))} className="flex-1 bg-red-600 disabled:bg-red-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> : <button onClick={handleSubmit} className="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันแจ้งเหตุ</button>}
+                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step===1&&!formData.category)||(step===2&&!formData.affected)||(step===3&&(!formData.location||!formData.details))} className="flex-1 bg-red-600 disabled:bg-red-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> 
+                        : <button onClick={handleSubmit} className="flex-1 bg-red-600 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันแจ้งเหตุ</button>}
                     </div>
                 </div>
             );
@@ -323,25 +482,59 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', details: '', contactInfo: '', contactBack: false, isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
+            const color = "#16A34A"; 
+
             const categories = ['ความเครียด/ซึมเศร้า', 'ปัญหาครอบครัว', 'ปัญหาความสัมพันธ์/เพื่อน', 'เรื่องการเรียน', 'ต้องการคนรับฟัง', 'อื่นๆ'];
 
-            const handleSubmit = async () => { const id = await submitTicket({ type: 'counseling', title: `[ปรึกษา] ${formData.category}`, ...formData }); setTrackingId(id); setStep(4); };
+            const handleSubmit = async () => {
+                const id = await submitTicket({ type: 'counseling', title: `[ปรึกษา] ${formData.category}`, ...formData });
+                setTrackingId(id); setStep(4);
+            };
 
             if (step === 4) return <SuccessScreen id={trackingId} message="เราได้รับข้อความของคุณแล้ว" navigateTo={navigateTo} />;
 
             return (
                 <div className="p-4 py-6">
                     <button onClick={() => navigateTo('home')} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]"><i className="ph ph-caret-left"></i> กลับหน้าหลัก</button>
-                    <div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600"><i className="ph ph-hand-heart text-[22px] ph-fill"></i></div><h2 className="text-xl font-bold">ปรึกษาปัญหาใจ</h2></div>
-                    <ProgressSteps total={3} current={step} color="#16A34A" />
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600"><i className="ph ph-hand-heart text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl font-bold">ปรึกษาปัญหาใจ</h2>
+                    </div>
+                    <ProgressSteps total={3} current={step} color={color} />
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
-                        {step === 1 && (<div className="animate-in fade-in"><h3 className="font-bold mb-4">เรื่องที่กังวลใจอยู่</h3><div className="grid grid-cols-1 md:grid-cols-2 gap-3">{categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-4 py-3 rounded-xl border text-left text-sm ${formData.category === c ? 'border-green-600 bg-green-50 text-green-600 font-bold' : 'bg-white'}`}>{c}</button>)}</div></div>)}
-                        {step === 2 && (<div className="animate-in fade-in space-y-5"><div><h3 className="font-bold mb-2">ระบายสิ่งที่คุณรู้สึก (ไม่บังคับ)</h3><textarea placeholder="พิมพ์สิ่งที่คุณอยากบอกได้เต็มที่เลย..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[120px] focus:outline-none focus:border-green-600"></textarea></div><div className="p-4 bg-[#F9FAFB] rounded-xl border space-y-4"><div className="flex items-start gap-3"><input type="checkbox" id="cb" checked={formData.contactBack} onChange={() => setFormData({...formData, contactBack: !formData.contactBack})} className="w-5 h-5 accent-green-600 rounded mt-0.5" /><label htmlFor="cb" className="text-sm font-medium">ต้องการให้คุณครูติดต่อกลับเพื่อให้คำปรึกษา</label></div>{formData.contactBack && <input type="text" placeholder="ระบุเบอร์โทร หรือ Line ID" value={formData.contactInfo} onChange={e => setFormData({...formData, contactInfo: e.target.value})} className="w-full bg-white border rounded-lg p-2.5 text-sm focus:outline-none focus:border-green-600 ml-8 max-w-[90%]" />}<div className="flex items-center gap-3 pt-2 border-t"><input type="checkbox" id="anon4" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-green-600 rounded" /><label htmlFor="anon4" className="text-sm">ปกปิดชื่อและตัวตนของฉัน</label></div></div></div>)}
-                        {step === 3 && (<div className="animate-in fade-in space-y-4"><h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3><div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3"><div><span className="text-gray-500 block">ด้านที่ปรึกษา</span><span className="font-bold text-green-600">{formData.category}</span></div><div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div><div><span className="text-gray-500 block">การติดต่อกลับ</span><span className="font-medium">{formData.contactBack ? `ต้องการ (${formData.contactInfo})` : 'ไม่ต้องการ'}</span></div></div></div>)}
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold mb-4">เรื่องที่กังวลใจอยู่</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-4 py-3 rounded-xl border text-left text-sm ${formData.category === c ? 'border-green-600 bg-green-50 text-green-600 font-bold' : 'bg-white'}`}>{c}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in space-y-5">
+                                <div><h3 className="font-bold mb-2">ระบายสิ่งที่คุณรู้สึก (ไม่บังคับ)</h3><textarea placeholder="พิมพ์สิ่งที่คุณอยากบอกได้เต็มที่เลย..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[120px] focus:outline-none focus:border-green-600"></textarea></div>
+                                <div className="p-4 bg-[#F9FAFB] rounded-xl border space-y-4">
+                                    <div className="flex items-start gap-3"><input type="checkbox" id="cb" checked={formData.contactBack} onChange={() => setFormData({...formData, contactBack: !formData.contactBack})} className="w-5 h-5 accent-green-600 rounded mt-0.5" /><label htmlFor="cb" className="text-sm font-medium">ต้องการให้คุณครูติดต่อกลับเพื่อให้คำปรึกษา</label></div>
+                                    {formData.contactBack && <input type="text" placeholder="ระบุเบอร์โทร หรือ Line ID" value={formData.contactInfo} onChange={e => setFormData({...formData, contactInfo: e.target.value})} className="w-full bg-white border rounded-lg p-2.5 text-sm focus:outline-none focus:border-green-600 ml-8 max-w-[90%]" />}
+                                    <div className="flex items-center gap-3 pt-2 border-t"><input type="checkbox" id="anon4" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-green-600 rounded" /><label htmlFor="anon4" className="text-sm">ปกปิดชื่อและตัวตนของฉัน</label></div>
+                                </div>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3">
+                                    <div><span className="text-gray-500 block">ด้านที่ปรึกษา</span><span className="font-bold text-green-600">{formData.category}</span></div>
+                                    <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
+                                    <div><span className="text-gray-500 block">การติดต่อกลับ</span><span className="font-medium">{formData.contactBack ? `ต้องการ (${formData.contactInfo})` : 'ไม่ต้องการ'}</span></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-3 mt-6 pb-4">
                         {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-gray-600 bg-white font-medium">ย้อนกลับ</button>}
-                        {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={step===1&&!formData.category} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> : <button onClick={handleSubmit} disabled={formData.contactBack && !formData.contactInfo} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันส่งข้อมูล</button>}
+                        {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={step===1&&!formData.category} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> 
+                        : <button onClick={handleSubmit} disabled={formData.contactBack && !formData.contactInfo} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันส่งข้อมูล</button>}
                     </div>
                 </div>
             );
@@ -351,25 +544,57 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', details: '', isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
+            const color = "#CA8A04"; 
+
             const categories = ['กิจกรรมใหม่', 'สิ่งอำนวยความสะดวก', 'การเรียน', 'เทคโนโลยี', 'สิ่งแวดล้อม', 'กฎระเบียบ', 'อื่น ๆ'];
 
-            const handleSubmit = async () => { const id = await submitTicket({ type: 'idea', title: `[ไอเดีย] ${formData.category}`, ...formData }); setTrackingId(id); setStep(4); };
+            const handleSubmit = async () => {
+                const id = await submitTicket({ type: 'idea', title: `[ไอเดีย] ${formData.category}`, ...formData });
+                setTrackingId(id); setStep(4);
+            };
 
             if (step === 4) return <SuccessScreen id={trackingId} message="ขอบคุณสำหรับไอเดียดีๆ" navigateTo={navigateTo} />;
 
             return (
                 <div className="p-4 py-6">
                     <button onClick={() => navigateTo('home')} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]"><i className="ph ph-caret-left"></i> กลับหน้าหลัก</button>
-                    <div className="flex items-center gap-3 mb-6"><div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600"><i className="ph ph-lightbulb text-[22px] ph-fill"></i></div><h2 className="text-xl font-bold">เสนอไอเดียใหม่</h2></div>
-                    <ProgressSteps total={3} current={step} color="#CA8A04" />
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center text-yellow-600"><i className="ph ph-lightbulb text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl font-bold">เสนอไอเดียใหม่</h2>
+                    </div>
+                    <ProgressSteps total={3} current={step} color={color} />
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
-                        {step === 1 && (<div className="animate-in fade-in"><h3 className="font-bold mb-4">หมวดหมู่ไอเดียของคุณ</h3><div className="grid grid-cols-2 gap-3">{categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-3 rounded-xl border text-sm ${formData.category === c ? 'border-yellow-500 bg-yellow-50 text-yellow-600 font-bold' : 'bg-white'}`}>{c}</button>)}</div></div>)}
-                        {step === 2 && (<div className="animate-in fade-in space-y-4"><div><h3 className="font-bold mb-2">อธิบายไอเดียของคุณ</h3><textarea placeholder="คุณอยากทำอะไร เพื่อปรับปรุงโรงเรียน..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[150px] focus:outline-none focus:border-yellow-500"></textarea></div><div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border"><input type="checkbox" id="anon5" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-yellow-500 rounded" /><label htmlFor="anon5" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label></div></div>)}
-                        {step === 3 && (<div className="animate-in fade-in space-y-4"><h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3><div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3"><div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-yellow-600">{formData.category}</span></div><div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div></div></div>)}
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold mb-4">หมวดหมู่ไอเดียของคุณ</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {categories.map(c => <button key={c} onClick={() => setFormData({...formData, category: c})} className={`p-3 rounded-xl border text-sm ${formData.category === c ? 'border-yellow-500 bg-yellow-50 text-yellow-600 font-bold' : 'bg-white'}`}>{c}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <div><h3 className="font-bold mb-2">อธิบายไอเดียของคุณ</h3><textarea placeholder="คุณอยากทำอะไร เพื่อปรับปรุงโรงเรียน..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[150px] focus:outline-none focus:border-yellow-500"></textarea></div>
+                                <div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border">
+                                    <input type="checkbox" id="anon5" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-yellow-500 rounded" />
+                                    <label htmlFor="anon5" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                </div>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <h3 className="font-bold mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3">
+                                    <div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-yellow-600">{formData.category}</span></div>
+                                    <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="flex gap-3 mt-6 pb-4">
                         {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-gray-600 bg-white font-medium">ย้อนกลับ</button>}
-                        {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={(step===1&&!formData.category)||(step===2&&!formData.details)} className="flex-1 bg-yellow-500 disabled:bg-yellow-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> : <button onClick={handleSubmit} className="flex-1 bg-yellow-500 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันเสนอไอเดีย</button>}
+                        {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={(step===1&&!formData.category)||(step===2&&!formData.details)} className="flex-1 bg-yellow-500 disabled:bg-yellow-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> 
+                        : <button onClick={handleSubmit} className="flex-1 bg-yellow-500 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันเสนอไอเดีย</button>}
                     </div>
                 </div>
             );
@@ -420,9 +645,8 @@
         };
 
         // ==========================================
-        // CUSTOM MODALS
+        // CUSTOM CONFIRM MODAL (สำหรับการกดลบ)
         // ==========================================
-        // สร้าง Component กล่องแจ้งเตือนการลบ (Custom Confirm Modal) ที่สวยงาม
         const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
             if (!isOpen) return null;
             return (
@@ -446,7 +670,7 @@
         // ADMIN VIEWS
         // ==========================================
 
-        const AdminLogin = ({ setCurrentView, setIsAdminAuth }) => {
+        const AdminLogin = ({ setCurrentView, setIsAdminAuth, showAlert }) => {
             const [password, setPassword] = useState('');
             const [isChecking, setIsChecking] = useState(false);
             const inputRef = useRef(null);
@@ -460,12 +684,12 @@
                         const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'login', password: password }) });
                         const json = await res.json();
                         if (json.status === 'success') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } 
-                        else { alert('รหัสผ่านไม่ถูกต้อง'); setPassword(''); } // Reset PIN on fail
+                        else { showAlert('รหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง', 'error'); setPassword(''); }
                     } catch(err) {
-                        if (password === '1234') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } else { alert('รหัสผ่านไม่ถูกต้อง'); setPassword(''); }
+                        if (password === '1234') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } else { showAlert('รหัสผ่านไม่ถูกต้อง', 'error'); setPassword(''); }
                     }
                 } else {
-                    if (password === '1234') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } else { alert('รหัสผ่านไม่ถูกต้อง'); setPassword(''); }
+                    if (password === '1234') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } else { showAlert('รหัสผ่านไม่ถูกต้อง', 'error'); setPassword(''); }
                 }
                 setIsChecking(false);
             };
@@ -478,19 +702,11 @@
                         <p className="text-gray-500 text-sm mb-6">กรุณากรอกรหัสผ่านเพื่อเข้าใช้งาน</p>
                         
                         <form onSubmit={handleLogin} className="space-y-6">
-                            {/* --- อัปเกรดช่องกรอกรหัส เป็นแบบ PIN 6 จุด --- */}
                             <div className="relative h-14 flex items-center justify-center cursor-text bg-gray-50 rounded-2xl border" onClick={() => inputRef.current?.focus()}>
-                                {/* input จริงซ่อนไว้โปร่งใส เพื่อรับค่าจากการพิมพ์คีย์บอร์ด */}
                                 <input
-                                    ref={inputRef}
-                                    type="password"
-                                    maxLength={6}
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="absolute inset-0 w-full h-full opacity-0"
-                                    style={{ zIndex: 10 }}
+                                    ref={inputRef} type="password" maxLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
+                                    className="absolute inset-0 w-full h-full opacity-0" style={{ zIndex: 10 }}
                                 />
-                                {/* จุด 6 จุด แสดงผลแบบกราฟิก */}
                                 <div className="flex gap-4 z-0">
                                     {[0, 1, 2, 3, 4, 5].map(i => (
                                         <div key={i} className={`w-4 h-4 rounded-full transition-all duration-200 ${password.length > i ? 'bg-[#C8102E] scale-110 shadow-sm' : 'bg-gray-300'}`}></div>
@@ -508,38 +724,82 @@
             );
         };
 
-        const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets, updateTicketStatus, deleteTicket, settings, setSettings }) => {
+        const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets, updateTicketStatus, deleteTicket, settings, setSettings, showAlert }) => {
             const [adminTab, setAdminTab] = useState('overview'); 
             const [selectedTicket, setSelectedTicket] = useState(null);
             const [timeFilter, setTimeFilter] = useState('7days'); 
+            
             const [editSettings, setEditSettings] = useState(settings);
             const [passwords, setPasswords] = useState({ old: '', new: '' });
-            
-            // State สำหรับจัดการ Custom Modal ลบข้อมูล
             const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+
+            // สถานะกำลังโหลดสำหรับปุ่ม
+            const [isSavingSettings, setIsSavingSettings] = useState(false);
+            const [isChangingPass, setIsChangingPass] = useState(false);
 
             const handleLogout = () => { setIsAdminAuth(false); setCurrentView('home'); };
 
+            // ตัวช่วยสำหรับแปลวันที่ dd/MM/yyyy เป็น Date object ในการคำนวณ 7 วัน 30 วัน
+            const parseThaiDate = (dateStr) => {
+                if (!dateStr) return new Date();
+                const parts = dateStr.split(' ')[0].split('/'); 
+                if (parts.length === 3) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+                return new Date(dateStr);
+            };
+
+            // กรองข้อมูล (Real Data Filter) ตามเวลาที่เลือก
+            const filteredTickets = tickets.filter(t => {
+                const tDate = parseThaiDate(t.date);
+                const now = new Date();
+                const diffDays = Math.ceil(Math.abs(now - tDate) / (1000 * 60 * 60 * 24));
+                if(timeFilter === 'today') return diffDays <= 1;
+                if(timeFilter === '7days') return diffDays <= 7;
+                if(timeFilter === '30days') return diffDays <= 30;
+                return true;
+            });
+
+            // คำนวณสถิติหมวดหมู่จากข้อมูลจริง
+            const catCounts = { issue: 0, idea: 0, counseling: 0, safety: 0 };
+            filteredTickets.forEach(t => {
+                if(t.type === 'issue') catCounts.issue++;
+                else if(t.type === 'idea') catCounts.idea++;
+                else if(t.type === 'counseling') catCounts.counseling++;
+                else if(t.type === 'safety') catCounts.safety++;
+            });
+            const totalCategorized = catCounts.issue + catCounts.idea + catCounts.counseling + catCounts.safety;
+            const getPct = (count) => totalCategorized === 0 ? 0 : Math.round((count / totalCategorized) * 100);
+
+            // คำนวณความรู้สึกหน้ายิ้มจากข้อมูลจริง
+            const feelingCounts = { excellent: 0, good: 0, neutral: 0, bad: 0, terrible: 0 };
+            filteredTickets.forEach(t => {
+                if (t.type === 'feeling' && t.details) {
+                    const match = t.details.match(/รู้สึก:\s*(excellent|good|neutral|bad|terrible)/);
+                    if (match && match[1]) feelingCounts[match[1]]++;
+                }
+            });
+
             const handleSaveSettings = async () => {
-                if(!GOOGLE_SCRIPT_URL) return alert("ยังไม่ได้เชื่อมต่อ Google Sheets");
+                if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
+                setIsSavingSettings(true);
                 setSettings(editSettings); 
-                alert('กำลังบันทึกข้อมูล...');
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSettings', settings: editSettings }) });
-                    alert('บันทึกการตั้งค่าเรียบร้อยแล้ว!');
-                } catch(e) { alert('มีปัญหาในการบันทึกข้อมูล'); }
+                    showAlert('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว', 'success');
+                } catch(e) { showAlert('มีปัญหาในการบันทึกข้อมูล', 'error'); }
+                setIsSavingSettings(false);
             };
 
             const handleChangePassword = async () => {
-                if(!passwords.old || !passwords.new) return alert("กรุณากรอกรหัสให้ครบ");
-                if(!GOOGLE_SCRIPT_URL) return alert("ยังไม่ได้เชื่อมต่อ Google Sheets");
-                alert('กำลังเปลี่ยนรหัสผ่าน...');
+                if(!passwords.old || !passwords.new) return showAlert("กรุณากรอกรหัสให้ครบถ้วน", "info");
+                if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
+                setIsChangingPass(true);
                 try {
                     const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'changePassword', oldPassword: passwords.old, newPassword: passwords.new }) });
                     const json = await res.json();
-                    if(json.status === 'success') { alert('เปลี่ยนรหัสผ่านสำเร็จ!'); setPasswords({ old: '', new: '' }); } 
-                    else { alert('รหัสผ่านเดิมไม่ถูกต้อง'); }
-                } catch(e) { alert('มีปัญหาในการสื่อสารกับเซิร์ฟเวอร์'); }
+                    if(json.status === 'success') { showAlert('เปลี่ยนรหัสผ่านสำเร็จ!', 'success'); setPasswords({ old: '', new: '' }); } 
+                    else { showAlert('รหัสผ่านเดิมไม่ถูกต้อง', 'error'); }
+                } catch(e) { showAlert('มีปัญหาในการสื่อสารกับเซิร์ฟเวอร์', 'error'); }
+                setIsChangingPass(false);
             };
 
             const TicketDetailModal = ({ ticket, onClose, onUpdateStatus, onDeleteClick }) => {
@@ -573,14 +833,13 @@
                                     <div className="border-t pt-4 mt-2">
                                         <h5 className="text-sm font-bold text-gray-700 mb-2">อัปเดตสถานะการทำงาน</h5>
                                         <div className="flex gap-2">
-                                            <button onClick={() => onUpdateStatus(ticket.id, 'investigating')} className="flex-1 py-2 text-xs rounded-lg font-bold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100">กำลังตรวจสอบ</button>
-                                            <button onClick={() => onUpdateStatus(ticket.id, 'resolved')} className="flex-1 py-2 text-xs rounded-lg font-bold bg-green-50 text-green-600 border border-green-200 hover:bg-green-100">ดำเนินการเสร็จสิ้น</button>
+                                            <button onClick={() => {onUpdateStatus(ticket.id, 'investigating'); showAlert('ปรับสถานะเป็น "กำลังตรวจสอบ" แล้ว', 'success'); }} className="flex-1 py-2 text-xs rounded-lg font-bold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100">กำลังตรวจสอบ</button>
+                                            <button onClick={() => {onUpdateStatus(ticket.id, 'resolved'); showAlert('ปรับสถานะเป็น "เสร็จสิ้น" แล้ว', 'success'); }} className="flex-1 py-2 text-xs rounded-lg font-bold bg-green-50 text-green-600 border border-green-200 hover:bg-green-100">ดำเนินการเสร็จสิ้น</button>
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="border-t pt-4 mt-2">
-                                    {/* เปลี่ยน onClick เพื่อเรียก Custom Confirm แทน alert */}
                                     <button onClick={() => onDeleteClick(ticket.id)} className="w-full py-2.5 text-sm rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
                                         <i className="ph ph-trash text-lg"></i> ลบข้อมูลนี้
                                     </button>
@@ -633,43 +892,43 @@
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clipboard-text text-gray-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">เรื่องทั้งหมด</p></div><p className="font-bold text-3xl text-gray-800">{tickets.length}</p></div>
-                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ</p></div><p className="font-bold text-3xl text-amber-500">{tickets.filter(t=>t.status==='pending' && !['feeling','idea','feedback'].includes(t.type)).length}</p></div>
-                                        <div className="bg-white p-5 rounded-2xl border shadow-sm col-span-2 md:col-span-1 flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-check-circle text-green-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">แก้ไข/รับทราบ</p></div><p className="font-bold text-3xl text-green-500">{tickets.filter(t=>t.status==='resolved' || ['feeling','idea','feedback'].includes(t.type)).length}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clipboard-text text-gray-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">เรื่องทั้งหมด</p></div><p className="font-bold text-3xl text-gray-800">{filteredTickets.length}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ</p></div><p className="font-bold text-3xl text-amber-500">{filteredTickets.filter(t=>t.status==='pending' && !['feeling','idea','feedback'].includes(t.type)).length}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border shadow-sm col-span-2 md:col-span-1 flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-check-circle text-green-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">แก้ไข/รับทราบ</p></div><p className="font-bold text-3xl text-green-500">{filteredTickets.filter(t=>t.status==='resolved' || ['feeling','idea','feedback'].includes(t.type)).length}</p></div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="bg-white border rounded-2xl p-5 shadow-sm">
-                                            <h3 className="font-bold text-gray-800 mb-4">หมวดหมู่ที่แจ้งเข้ามา</h3>
+                                            <h3 className="font-bold text-gray-800 mb-4">หมวดหมู่ที่แจ้งเข้ามา (Real Data)</h3>
                                             <div className="space-y-4">
-                                                <div><div className="flex justify-between text-sm mb-1"><span>แจ้งซ่อม/ปัญหา</span><span className="font-bold">45%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-orange-500 h-2 rounded-full w-[45%]"></div></div></div>
-                                                <div><div className="flex justify-between text-sm mb-1"><span>เสนอไอเดีย</span><span className="font-bold">25%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-yellow-500 h-2 rounded-full w-[25%]"></div></div></div>
-                                                <div><div className="flex justify-between text-sm mb-1"><span>ปรึกษาปัญหาใจ</span><span className="font-bold">20%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-green-500 h-2 rounded-full w-[20%]"></div></div></div>
-                                                <div><div className="flex justify-between text-sm mb-1"><span>เหตุความปลอดภัย</span><span className="font-bold">10%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full w-[10%]"></div></div></div>
+                                                <div><div className="flex justify-between text-sm mb-1"><span>แจ้งซ่อม/ปัญหา</span><span className="font-bold">{getPct(catCounts.issue)}%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-orange-500 h-2 rounded-full transition-all duration-500" style={{width: `${getPct(catCounts.issue)}%`}}></div></div></div>
+                                                <div><div className="flex justify-between text-sm mb-1"><span>เสนอไอเดีย</span><span className="font-bold">{getPct(catCounts.idea)}%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-yellow-500 h-2 rounded-full transition-all duration-500" style={{width: `${getPct(catCounts.idea)}%`}}></div></div></div>
+                                                <div><div className="flex justify-between text-sm mb-1"><span>ปรึกษาปัญหาใจ</span><span className="font-bold">{getPct(catCounts.counseling)}%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-green-500 h-2 rounded-full transition-all duration-500" style={{width: `${getPct(catCounts.counseling)}%`}}></div></div></div>
+                                                <div><div className="flex justify-between text-sm mb-1"><span>เหตุความปลอดภัย</span><span className="font-bold">{getPct(catCounts.safety)}%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full transition-all duration-500" style={{width: `${getPct(catCounts.safety)}%`}}></div></div></div>
                                             </div>
                                         </div>
                                         <div className="bg-white border rounded-2xl p-5 shadow-sm">
-                                            <h3 className="font-bold text-gray-800 mb-4">ภาพรวมความรู้สึก</h3>
+                                            <h3 className="font-bold text-gray-800 mb-4">ภาพรวมความรู้สึก (Real Data)</h3>
                                             <div className="grid grid-cols-5 gap-2">
-                                                <div className="flex flex-col items-center p-2 bg-green-50 rounded-xl"><span className="text-3xl mb-1">😀</span><span className="font-bold text-green-700">12</span><span className="text-[10px] text-green-600">ดีมาก</span></div>
-                                                <div className="flex flex-col items-center p-2 bg-blue-50 rounded-xl"><span className="text-3xl mb-1">🙂</span><span className="font-bold text-blue-700">8</span><span className="text-[10px] text-blue-600">ดี</span></div>
-                                                <div className="flex flex-col items-center p-2 bg-gray-50 rounded-xl"><span className="text-3xl mb-1">😐</span><span className="font-bold text-gray-700">15</span><span className="text-[10px] text-gray-600">เฉยๆ</span></div>
-                                                <div className="flex flex-col items-center p-2 bg-orange-50 rounded-xl"><span className="text-3xl mb-1">🙁</span><span className="font-bold text-orange-700">4</span><span className="text-[10px] text-orange-600">ไม่ค่อยดี</span></div>
-                                                <div className="flex flex-col items-center p-2 bg-red-50 rounded-xl"><span className="text-3xl mb-1">😢</span><span className="font-bold text-red-700">2</span><span className="text-[10px] text-red-600">แย่</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-green-50 rounded-xl"><span className="text-3xl mb-1">😀</span><span className="font-bold text-green-700">{feelingCounts.excellent}</span><span className="text-[10px] text-green-600">ดีมาก</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-blue-50 rounded-xl"><span className="text-3xl mb-1">🙂</span><span className="font-bold text-blue-700">{feelingCounts.good}</span><span className="text-[10px] text-blue-600">ดี</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-gray-50 rounded-xl"><span className="text-3xl mb-1">😐</span><span className="font-bold text-gray-700">{feelingCounts.neutral}</span><span className="text-[10px] text-gray-600">เฉยๆ</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-orange-50 rounded-xl"><span className="text-3xl mb-1">🙁</span><span className="font-bold text-orange-700">{feelingCounts.bad}</span><span className="text-[10px] text-orange-600">ไม่ค่อยดี</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-red-50 rounded-xl"><span className="text-3xl mb-1">😢</span><span className="font-bold text-red-700">{feelingCounts.terrible}</span><span className="text-[10px] text-red-600">แย่</span></div>
                                             </div>
                                         </div>
                                     </div>
 
                                     <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mt-6">
                                         <div className="p-4 border-b bg-gray-50"><h3 className="font-bold text-gray-800">รายการล่าสุด</h3></div>
-                                        {tickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
+                                        {filteredTickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-sm text-left">
                                                     <thead className="bg-gray-50 text-gray-500 border-b">
                                                         <tr><th className="px-4 py-3 font-medium">Tracking ID</th><th className="px-4 py-3 font-medium">หมวดหมู่</th><th className="px-4 py-3 font-medium">หัวข้อ</th><th className="px-4 py-3 font-medium">สถานะ</th></tr>
                                                     </thead>
                                                     <tbody className="divide-y">
-                                                        {tickets.slice(0,5).map(t => (
+                                                        {filteredTickets.slice(0,5).map(t => (
                                                             <tr key={t.id} onClick={() => setSelectedTicket(t)} className="hover:bg-gray-50 cursor-pointer transition-colors">
                                                                 <td className="px-4 py-3 font-mono text-gray-600">{t.id}</td>
                                                                 <td className="px-4 py-3"><span className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs">{t.category}</span></td>
@@ -688,7 +947,7 @@
                             )}
                             {adminTab === 'tickets' && (
                                 <div className="space-y-3 animate-in fade-in max-w-4xl mx-auto">
-                                    {tickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการ</p> : tickets.map(t => (
+                                    {tickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการในระบบ (รอโหลดข้อมูลจาก Google Sheet)</p> : tickets.map(t => (
                                         <div key={t.id} onClick={() => setSelectedTicket(t)} className="bg-white p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:border-gray-300 transition-all">
                                             <div className="flex justify-between mb-2">
                                                 <span className="font-mono text-xs text-gray-500">{t.id}</span>
@@ -713,7 +972,9 @@
                                             <div><label className="block text-sm text-gray-600 mb-1">ลิงก์โลโก้ (URL)</label>
                                                 <input type="text" value={editSettings.logoUrl} onChange={e => setEditSettings({...editSettings, logoUrl: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
                                             </div>
-                                            <button onClick={handleSaveSettings} className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2 transition-colors">บันทึกข้อมูลโรงเรียน</button>
+                                            <button onClick={handleSaveSettings} disabled={isSavingSettings} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2 transition-colors">
+                                                {isSavingSettings ? 'กำลังบันทึกข้อมูล...' : 'บันทึกข้อมูลโรงเรียน'}
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="bg-white p-5 rounded-2xl border shadow-sm">
@@ -723,7 +984,9 @@
                                                 <input type="checkbox" checked={editSettings.popupEnabled} onChange={e => setEditSettings({...editSettings, popupEnabled: e.target.checked})} className="w-5 h-5 accent-[#C8102E]" /> เปิดใช้งานป๊อปอัพ
                                             </label>
                                             <input type="text" placeholder="URL รูปภาพป๊อปอัพ" value={editSettings.popupImageUrl} onChange={e => setEditSettings({...editSettings, popupImageUrl: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
-                                            <button onClick={handleSaveSettings} className="bg-gray-900 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">บันทึกการตั้งค่าป๊อปอัพ</button>
+                                            <button onClick={handleSaveSettings} disabled={isSavingSettings} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                                                {isSavingSettings ? 'กำลังบันทึกข้อมูล...' : 'บันทึกการตั้งค่าป๊อปอัพ'}
+                                            </button>
                                         </div>
                                     </div>
                                     <div className="bg-white p-5 rounded-2xl border shadow-sm">
@@ -731,7 +994,9 @@
                                         <div className="space-y-4">
                                             <input type="password" placeholder="รหัสผ่านปัจจุบัน" value={passwords.old} onChange={e=>setPasswords({...passwords, old: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
                                             <input type="password" placeholder="รหัสผ่านใหม่" value={passwords.new} onChange={e=>setPasswords({...passwords, new: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
-                                            <button onClick={handleChangePassword} className="bg-amber-600 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">เปลี่ยนรหัสผ่าน</button>
+                                            <button onClick={handleChangePassword} disabled={isChangingPass} className="bg-amber-600 disabled:bg-amber-300 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                                                {isChangingPass ? 'กำลังเปลี่ยนรหัสผ่าน...' : 'เปลี่ยนรหัสผ่าน'}
+                                            </button>
                                         </div>
                                     </div>
                                 </div>
@@ -810,8 +1075,12 @@
         function App() {
             const [currentView, setCurrentView] = useState('home');
             const [isAdminAuth, setIsAdminAuth] = useState(false);
+            
+            // ลบ Fake Data ทิ้งหมด! เริ่มต้นด้วย Array ว่าง เพื่อรอดูดของจริงจาก Google Sheets
             const [tickets, setTickets] = useState([]);
+            
             const [isLoading, setIsLoading] = useState(false); 
+            const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: 'info', message: '' });
             
             const [settings, setSettings] = useState({ 
                 schoolName: "STUDENT COUNCIL • KHAMMUANG SCHOOL", 
@@ -819,6 +1088,9 @@
                 popupEnabled: false, 
                 popupImageUrl: "" 
             });
+
+            // ฟังก์ชันสำหรับเรียกแจ้งเตือนแทน alert()
+            const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
 
             useEffect(() => {
                 const fetchData = async () => {
@@ -875,9 +1147,10 @@
                         body: JSON.stringify({ action: 'delete', id: id })
                     }).catch(e => console.error(e));
                 }
+                showAlert("ลบข้อมูลออกจากระบบแล้ว", "success");
             };
 
-            if (currentView === 'admin-login') return <AdminLogin setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} />;
+            if (currentView === 'admin-login') return <AdminLogin setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} showAlert={showAlert} />;
             
             return (
                 <div className="min-h-screen flex justify-center bg-gray-200">
@@ -885,8 +1158,11 @@
                         
                         {isLoading && <div className="absolute top-0 left-0 w-full h-1 bg-gray-200 overflow-hidden z-50"><div className="w-1/2 h-full bg-[#C8102E] animate-[slide_1.5s_ease-in-out_infinite]"></div></div>}
 
+                        {/* กล่อง Custom Alert ใช้ได้ทั่วทั้งแอป */}
+                        <CustomAlert config={alertConfig} onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })} />
+
                         {isAdminAuth ? (
-                            <AdminDashboard setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} tickets={tickets} updateTicketStatus={updateTicketStatus} deleteTicket={deleteTicket} settings={settings} setSettings={setSettings} />
+                            <AdminDashboard setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} tickets={tickets} updateTicketStatus={updateTicketStatus} deleteTicket={deleteTicket} settings={settings} setSettings={setSettings} showAlert={showAlert} />
                         ) : (
                             <>
                                 <PosterPopup settings={settings} />
@@ -897,9 +1173,9 @@
                                     {currentView === 'feeling' && <FeelingView navigateTo={navigateTo} submitTicket={submitTicketData} />}
                                     {currentView === 'feedback' && <FeedbackView navigateTo={navigateTo} submitTicket={submitTicketData} />}
                                     {currentView === 'idea' && <IdeaView navigateTo={navigateTo} submitTicket={submitTicketData} />}
-                                    {currentView === 'issue' && <IssueReportView navigateTo={navigateTo} submitTicket={submitTicketData} />}
-                                    {currentView === 'safety' && <SafetyReportView navigateTo={navigateTo} submitTicket={submitTicketData} />}
-                                    {currentView === 'counseling' && <CounselingReportView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                                    {currentView === 'issue' && <IssueReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
+                                    {currentView === 'safety' && <SafetyReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
+                                    {currentView === 'counseling' && <CounselingReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
                                     {currentView === 'tracking' && <TrackingView tickets={tickets} />}
                                 </main>
 
@@ -920,5 +1196,6 @@
     </script>
 </body>
 </html>
+
 
 
