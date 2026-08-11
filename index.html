@@ -43,84 +43,48 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // ดึงฟังก์ชันของ React มาใช้แบบไม่ต้อง import
         const { useState, useEffect, useRef } = React;
 
-        function App() {
-            // URL ของ Google Apps Script ที่ภีมสร้างไว้
-            const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoagjo7kQFW8iZWfZtTRYYb1_jD0lPwow3DvfE-ctz8nnFnHndnjknxlhjZLz-dEIR/exec"; 
+        // ==========================================
+        // URL ของ Google Apps Script (Backend)
+        // ==========================================
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoagjo7kQFW8iZWfZtTRYYb1_jD0lPwow3DvfE-ctz8nnFnHndnjknxlhjZLz-dEIR/exec"; 
 
-            const [currentView, setCurrentView] = useState('home');
-            const [isAdminAuth, setIsAdminAuth] = useState(false);
-            const [tickets, setTickets] = useState([]);
-            
+        // ข้อมูลจำลองและตัวแปรคงที่
+        const FEELING_EMOJIS_DATA = [
+            { emoji: '😀', label: 'ดีมาก', value: 'excellent' },
+            { emoji: '🙂', label: 'ดี', value: 'good' },
+            { emoji: '😐', label: 'เฉย ๆ', value: 'neutral' },
+            { emoji: '🙁', label: 'ไม่ค่อยดี', value: 'bad' },
+            { emoji: '😢', label: 'แย่', value: 'terrible' },
+        ];
+        
+        const FEELING_FACTORS_DATA = [
+            'เพื่อน', 'การเรียน', 'ครู', 'กิจกรรม', 'ครอบครัว', 'สถานที่', 
+            'อาหาร', 'ความปลอดภัย', 'งาน / การบ้าน', 'การเดินทาง', 'เรื่องส่วนตัว', 'อื่น ๆ'
+        ];
+
+        // ==========================================
+        // COMPONENT ย่อยต่างๆ (ดึงออกมาไว้นอก App แล้ว เพื่อแก้บัคจอดำ/ฟอร์มหาย)
+        // ==========================================
+
+        const Header = ({ navigateTo, onAdminTrigger }) => {
             const [logoClicks, setLogoClicks] = useState(0);
             const clickTimeoutRef = useRef(null);
 
-            useEffect(() => {
-                // ข้อมูลตัวอย่างตอนเปิดเว็บใหม่ๆ
-                setTickets([
-                    { id: 'KM-2026-0001', type: 'issue', category: 'สถานที่', status: 'pending', date: '2026-08-11', title: 'แอร์ห้อง ม.5/2 ไม่เย็น', details: 'เปิดแล้วมีแต่ลมร้อนออกมา', location: 'อาคาร 2 ชั้น 3', images: [] },
-                    { id: 'KM-2026-0002', type: 'safety', category: 'Bullying', status: 'investigating', date: '2026-08-10', title: 'มีกลุ่มนักเรียนรีดไถเงินที่หลังโรงอาหาร', details: 'เห็นเหตุการณ์ช่วงพักเที่ยง', location: 'หลังโรงอาหาร', images: [] }
-                ]);
-            }, []);
-
-            // ระบบซ่อนแอดมิน (กด 5 ครั้ง)
             const handleLogoClick = () => {
                 setLogoClicks((prev) => prev + 1);
                 if (clickTimeoutRef.current) clearTimeout(clickTimeoutRef.current);
                 clickTimeoutRef.current = setTimeout(() => setLogoClicks(0), 3000);
 
                 if (logoClicks + 1 >= 5) {
-                    setCurrentView('admin-login');
+                    onAdminTrigger();
                     setLogoClicks(0);
                     clearTimeout(clickTimeoutRef.current);
                 }
             };
 
-            const navigateTo = (view) => {
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-                setCurrentView(view);
-            };
-
-            const generateTrackingId = () => {
-                return `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-            };
-
-            // ฟังก์ชันส่งข้อมูลไปหลังบ้าน
-            const submitTicket = async (data) => {
-                const newId = generateTrackingId();
-                const payload = { ...data, id: newId };
-
-                // อัปเดตหน้าบ้านให้เห็นทันที
-                const newTicket = {
-                    id: newId,
-                    status: 'pending',
-                    date: new Date().toISOString().split('T')[0],
-                    title: data.details ? data.details.substring(0, 30) + '...' : data.category,
-                    ...data
-                };
-                setTickets(prev => [newTicket, ...prev]);
-
-                // ส่งไป Google Sheets
-                if (GOOGLE_SCRIPT_URL) {
-                    try {
-                        // ใช้ fetch แบบธรรมดา ส่งเป็น text/plain เลี่ยงปัญหา CORS
-                        fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify(payload)
-                        }).then(res => res.json())
-                          .then(resData => console.log("บันทึกสำเร็จ:", resData))
-                          .catch(err => console.error("ส่งข้อมูลไม่สำเร็จ:", err));
-                    } catch (error) {
-                        console.error("Fetch Error:", error);
-                    }
-                }
-                return newId;
-            };
-
-            const Header = () => (
+            return (
                 <header className="sticky top-0 z-40 bg-white border-b border-[#E5E7EB] px-4 py-3 flex justify-between items-center shadow-sm">
                     <div className="flex items-center gap-3" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
                         <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#C8102E] to-[#9E0B23] flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-[#FDECEF]">
@@ -136,913 +100,980 @@
                     </button>
                 </header>
             );
+        };
 
-            const BottomNav = () => (
-                <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] pb-safe z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:hidden">
-                    <div className="flex justify-around items-center p-2">
-                        <NavButton icon="ph-house" label="หน้าหลัก" view="home" />
-                        <NavButton icon="ph-chat-circle" label="ความรู้สึก" view="feeling" />
-                        <NavButton icon="ph-clipboard-text" label="แจ้งเรื่อง" view="issue" />
-                        <NavButton icon="ph-shield-warning" label="ความปลอดภัย" view="safety" />
+        const NavButton = ({ icon, label, view, currentView, navigateTo }) => {
+            const isActive = currentView === view;
+            return (
+                <button onClick={() => navigateTo(view)} className={`flex flex-col items-center p-2 w-16 transition-all ${isActive ? 'text-[#C8102E]' : 'text-[#6B7280]'}`}>
+                    <div className={`p-1.5 rounded-xl mb-1 flex items-center justify-center ${isActive ? 'bg-[#FDECEF]' : 'bg-transparent'}`}>
+                        <i className={`ph ${icon} text-[24px] ${isActive ? 'ph-fill' : ''}`}></i>
                     </div>
-                </div>
-            );
-
-            const NavButton = ({ icon, label, view }) => {
-                const isActive = currentView === view;
-                return (
-                    <button onClick={() => navigateTo(view)} className={`flex flex-col items-center p-2 w-16 transition-all ${isActive ? 'text-[#C8102E]' : 'text-[#6B7280]'}`}>
-                        <div className={`p-1.5 rounded-xl mb-1 flex items-center justify-center ${isActive ? 'bg-[#FDECEF]' : 'bg-transparent'}`}>
-                            <i className={`ph ${icon} text-[24px] ${isActive ? 'ph-fill' : ''}`}></i>
-                        </div>
-                        <span className="text-[10px] font-medium">{label}</span>
-                    </button>
-                );
-            };
-
-            const DesktopSidebar = () => (
-                <div className="hidden md:flex flex-col w-64 h-screen fixed left-0 top-0 bg-white border-r border-[#E5E7EB] pt-20 px-4">
-                    <div className="space-y-2">
-                        <SidebarItem icon="ph-house" label="หน้าหลัก" view="home" />
-                        <SidebarItem icon="ph-chat-circle" label="บันทึกความรู้สึก" view="feeling" />
-                        <SidebarItem icon="ph-chat-teardrop-text" label="แสดงความคิดเห็น" view="feedback" />
-                        <SidebarItem icon="ph-clipboard-text" label="แจ้งปัญหา" view="issue" />
-                        <SidebarItem icon="ph-shield-warning" label="แจ้งเหตุความปลอดภัย" view="safety" />
-                        <SidebarItem icon="ph-handshake" label="ขอความช่วยเหลือ" view="help" />
-                        <SidebarItem icon="ph-lightbulb" label="เสนอไอเดีย" view="idea" />
-                    </div>
-                    
-                    <div className="mt-auto pb-8">
-                        <button onClick={() => navigateTo('tracking')} className="w-full flex items-center justify-between p-3 rounded-xl bg-[#F7F8FA] border border-[#E5E7EB] hover:border-[#C8102E] group transition-all">
-                            <div className="flex items-center gap-2 text-[#4B5563]">
-                                <i className="ph ph-magnifying-glass text-[18px]"></i>
-                                <span className="text-sm font-medium">ติดตามสถานะ</span>
-                            </div>
-                            <i className="ph ph-caret-right text-[16px] text-[#9CA3AF] group-hover:text-[#C8102E]"></i>
-                        </button>
-                    </div>
-                </div>
-            );
-
-            const SidebarItem = ({ icon, label, view }) => {
-                const isActive = currentView === view;
-                return (
-                    <button onClick={() => navigateTo(view)} className={`w-full flex items-center gap-3 p-3 rounded-xl transition-all ${isActive ? 'bg-[#FFF5F6] text-[#C8102E] font-semibold shadow-sm' : 'text-[#4B5563] hover:bg-[#F3F4F6]'}`}>
-                        <i className={`ph ${icon} text-[20px] ${isActive ? 'ph-fill' : ''}`}></i>
-                        <span className="text-sm">{label}</span>
-                    </button>
-                );
-            };
-
-            const HomeView = () => (
-                <div className="max-w-4xl mx-auto px-4 py-6 pb-28 md:pb-8 animate-in fade-in duration-300">
-                    <div className="bg-gradient-to-br from-[#E11D48] via-[#BE123C] to-[#881337] rounded-3xl p-6 text-white shadow-[0_8px_30px_rgb(200,16,46,0.3)] mb-8 relative overflow-hidden">
-                        <div className="absolute -right-6 top-0 text-white/10 rotate-12 transform scale-110 pointer-events-none">
-                            <i className="ph ph-chat-teardrop-text text-[140px]"></i>
-                        </div>
-                        <div className="absolute right-20 -bottom-10 text-white/10 -rotate-12 transform scale-125 pointer-events-none">
-                            <i className="ph ph-lightbulb text-[120px]"></i>
-                        </div>
-                        <div className="absolute left-16 -top-12 text-white/5 rotate-45 transform scale-110 pointer-events-none">
-                            <i className="ph ph-handshake text-[150px]"></i>
-                        </div>
-                        <div className="absolute -left-10 bottom-2 text-white/5 -rotate-12 transform scale-90 pointer-events-none">
-                            <i className="ph ph-sparkle text-[100px]"></i>
-                        </div>
-
-                        <div className="relative z-10">
-                            <h2 className="text-2xl font-bold mb-2.5">ยินดีต้อนรับสู่พื้นที่ของคุณ</h2>
-                            <p className="text-[#FFE4E6] text-sm md:text-base max-w-md leading-relaxed opacity-95">
-                                ทุกเสียงของนักเรียนมีความหมาย ที่นี่คือพื้นที่ปลอดภัยสำหรับบอกความรู้สึก แสดงความคิดเห็น แจ้งปัญหา ขอความช่วยเหลือ และเสนอไอเดียใหม่ๆ
-                            </p>
-                        </div>
-                    </div>
-
-                    <h3 className="text-lg font-bold text-[#1F2937] mb-4 flex items-center gap-2">
-                        <i className="ph ph-lightbulb text-[#C8102E] text-[20px] ph-fill"></i>
-                        คุณต้องการทำอะไรในวันนี้?
-                    </h3>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-8">
-                        <ActionCard icon="ph-chat-circle" title="ความรู้สึกของฉัน" desc="บอกเล่าความรู้สึกวันนี้" view="feeling" color="bg-blue-50 text-blue-600 border-blue-100" />
-                        <ActionCard icon="ph-chat-teardrop-text" title="ความคิดเห็น" desc="เสนอแนะสิ่งต่างๆ" view="feedback" color="bg-purple-50 text-purple-600 border-purple-100" />
-                        <ActionCard icon="ph-clipboard-text" title="แจ้งปัญหา" desc="ซ่อมแซม, สถานที่" view="issue" color="bg-orange-50 text-orange-600 border-orange-100" />
-                        <ActionCard icon="ph-shield-warning" title="ความปลอดภัย" desc="แจ้งเหตุเร่งด่วน" view="safety" color="bg-red-50 text-[#C8102E] border-red-100" />
-                        <ActionCard icon="ph-handshake" title="ขอความช่วยเหลือ" desc="ปรึกษา, ให้คนช่วย" view="help" color="bg-green-50 text-green-600 border-green-100" />
-                        <ActionCard icon="ph-lightbulb" title="เสนอไอเดีย" desc="บอกไอเดียใหม่ๆ" view="idea" color="bg-yellow-50 text-yellow-600 border-yellow-100" />
-                    </div>
-
-                    <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-sm flex items-start gap-3">
-                        <div className="mt-1 text-[#6B7280]">
-                            <i className="ph ph-shield-check text-[20px]"></i>
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-[#1F2937] mb-1">ความเป็นส่วนตัวของคุณคือสิ่งสำคัญ</h3>
-                            <p className="text-[13px] text-[#6B7280] leading-relaxed">
-                                ระบบนี้รองรับการส่งข้อมูลแบบ <b>ไม่เปิดเผยตัวตน (Anonymous)</b> เพื่อให้นักเรียนสามารถแจ้งเรื่องราวต่างๆ ได้อย่างสบายใจ และข้อมูลทั้งหมดจะถูกจัดการด้วยมาตรฐานความปลอดภัยสูงสุด
-                            </p>
-                        </div>
-                    </div>
-                </div>
-            );
-
-            const ActionCard = ({ icon, title, desc, view, color }) => (
-                <button onClick={() => navigateTo(view)} className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:-translate-y-0.5 hover:border-[#FDECEF] transition-all text-left flex flex-col h-full group">
-                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border ${color}`}>
-                        <i className={`ph ${icon} text-[22px] ph-fill`}></i>
-                    </div>
-                    <h4 className="font-semibold text-[#1F2937] text-[15px] md:text-base mb-1">{title}</h4>
-                    <p className="text-[11px] md:text-xs text-[#6B7280] mt-auto">{desc}</p>
+                    <span className="text-[10px] font-medium">{label}</span>
                 </button>
             );
+        };
 
-            const SuccessScreen = ({ id, backTo = "home", message = "ส่งข้อมูลเรียบร้อยแล้ว" }) => {
-                const [copied, setCopied] = useState(false);
-                const [countdown, setCountdown] = useState(15);
+        const BottomNav = ({ currentView, navigateTo }) => (
+            <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-[#E5E7EB] pb-safe z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] md:hidden">
+                <div className="flex justify-around items-center p-2">
+                    <NavButton icon="ph-house" label="หน้าหลัก" view="home" currentView={currentView} navigateTo={navigateTo} />
+                    <NavButton icon="ph-chat-circle" label="ความรู้สึก" view="feeling" currentView={currentView} navigateTo={navigateTo} />
+                    <NavButton icon="ph-clipboard-text" label="แจ้งเรื่อง" view="issue" currentView={currentView} navigateTo={navigateTo} />
+                    <NavButton icon="ph-shield-warning" label="ความปลอดภัย" view="safety" currentView={currentView} navigateTo={navigateTo} />
+                </div>
+            </div>
+        );
 
-                useEffect(() => {
-                    const timer = setInterval(() => {
-                        setCountdown((prev) => {
-                            if (prev <= 1) {
-                                clearInterval(timer);
-                                navigateTo(backTo);
-                                return 0;
-                            }
-                            return prev - 1;
-                        });
-                    }, 1000);
-                    return () => clearInterval(timer);
-                }, [backTo]);
+        const ActionCard = ({ icon, title, desc, view, color, navigateTo }) => (
+            <button onClick={() => navigateTo(view)} className="bg-white p-4 rounded-2xl border border-[#E5E7EB] shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-md hover:-translate-y-0.5 hover:border-[#FDECEF] transition-all text-left flex flex-col h-full group">
+                <div className={`w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border ${color}`}>
+                    <i className={`ph ${icon} text-[22px] ph-fill`}></i>
+                </div>
+                <h4 className="font-semibold text-[#1F2937] text-[15px] md:text-base mb-1">{title}</h4>
+                <p className="text-[11px] md:text-xs text-[#6B7280] mt-auto">{desc}</p>
+            </button>
+        );
 
-                const handleCopy = () => {
-                    if (!id) return;
-                    const textArea = document.createElement("textarea");
-                    textArea.value = id;
-                    document.body.appendChild(textArea);
-                    textArea.select();
-                    try {
-                        document.execCommand('copy');
-                        setCopied(true);
-                        setTimeout(() => setCopied(false), 2000);
-                    } catch (err) {
-                        console.error('Copy failed', err);
-                    }
-                    document.body.removeChild(textArea);
-                };
+        const SuccessScreen = ({ id, backTo = "home", message = "ส่งข้อมูลเรียบร้อยแล้ว", navigateTo }) => {
+            const [copied, setCopied] = useState(false);
+            const [countdown, setCountdown] = useState(15);
 
-                return (
-                    <div className="max-w-md mx-auto px-4 py-12 text-center animate-in zoom-in-95 duration-400">
-                        <div className="w-20 h-20 bg-[#16A34A] rounded-full flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-green-100">
-                            <i className="ph ph-check-circle text-[40px] ph-fill"></i>
-                        </div>
-                        <h2 className="text-2xl font-bold text-[#1F2937] mb-2">{message}</h2>
-                        <p className="text-[#6B7280] mb-8">ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการพัฒนาโรงเรียนของเรา</p>
-                        
-                        {id && (
-                            <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 mb-8 shadow-sm">
-                                <div className="p-3 bg-[#FEF2F2] rounded-xl border border-[#FECACA] mb-4">
-                                    <p className="text-sm font-bold text-[#DC2626] flex items-center justify-center gap-1">
-                                        ⚠️ กรุณาคัดลอกรหัสหรือแคปหน้าจอเก็บไว้
-                                    </p>
-                                    <p className="text-xs text-[#991B1B] mt-1">เพื่อนำหมายเลขนี้มาใช้ติดตามสถานะเรื่องของคุณ</p>
+            useEffect(() => {
+                const timer = setInterval(() => {
+                    setCountdown((prev) => {
+                        if (prev <= 1) {
+                            clearInterval(timer);
+                            navigateTo(backTo);
+                            return 0;
+                        }
+                        return prev - 1;
+                    });
+                }, 1000);
+                return () => clearInterval(timer);
+            }, [backTo, navigateTo]);
+
+            const handleCopy = () => {
+                if (!id) return;
+                const textArea = document.createElement("textarea");
+                textArea.value = id;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                } catch (err) {
+                    console.error('Copy failed', err);
+                }
+                document.body.removeChild(textArea);
+            };
+
+            return (
+                <div className="max-w-md mx-auto px-4 py-12 text-center animate-in zoom-in-95 duration-400">
+                    <div className="w-20 h-20 bg-[#16A34A] rounded-full flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-green-100">
+                        <i className="ph ph-check-circle text-[40px] ph-fill"></i>
+                    </div>
+                    <h2 className="text-2xl font-bold text-[#1F2937] mb-2">{message}</h2>
+                    <p className="text-[#6B7280] mb-8">ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการพัฒนาโรงเรียนของเรา</p>
+                    
+                    {id && (
+                        <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 mb-8 shadow-sm">
+                            <div className="p-3 bg-[#FEF2F2] rounded-xl border border-[#FECACA] mb-4">
+                                <p className="text-sm font-bold text-[#DC2626] flex items-center justify-center gap-1">
+                                    ⚠️ กรุณาคัดลอกรหัสหรือแคปหน้าจอเก็บไว้
+                                </p>
+                                <p className="text-xs text-[#991B1B] mt-1">เพื่อนำหมายเลขนี้มาใช้ติดตามสถานะเรื่องของคุณ</p>
+                            </div>
+
+                            <p className="text-sm text-[#6B7280] mb-2 font-medium">หมายเลขติดตามของคุณคือ</p>
+                            
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center justify-center bg-[#F7F8FA] py-4 rounded-xl border-2 border-dashed border-[#C8102E]">
+                                    <span className="text-2xl md:text-3xl font-bold text-[#C8102E] tracking-widest font-mono">
+                                        {id}
+                                    </span>
                                 </div>
+                                <button onClick={handleCopy} className={`w-full font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 ${copied ? 'bg-[#16A34A] text-white' : 'bg-[#1F2937] text-white hover:bg-black'}`}>
+                                    {copied ? <><i className="ph ph-check text-[20px]"></i> คัดลอกแล้ว!</> : <><i className="ph ph-copy text-[20px]"></i> คัดลอกหมายเลขติดตาม</>}
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
-                                <p className="text-sm text-[#6B7280] mb-2 font-medium">หมายเลขติดตามของคุณคือ</p>
-                                
-                                <div className="flex flex-col gap-3">
-                                    <div className="flex items-center justify-center bg-[#F7F8FA] py-4 rounded-xl border-2 border-dashed border-[#C8102E]">
-                                        <span className="text-2xl md:text-3xl font-bold text-[#C8102E] tracking-widest font-mono">
-                                            {id}
-                                        </span>
-                                    </div>
-                                    <button onClick={handleCopy} className={`w-full font-bold py-3.5 rounded-xl transition-all flex items-center justify-center gap-2 ${copied ? 'bg-[#16A34A] text-white' : 'bg-[#1F2937] text-white hover:bg-black'}`}>
-                                        {copied ? <><i className="ph ph-check text-[20px]"></i> คัดลอกแล้ว!</> : <><i className="ph ph-copy text-[20px]"></i> คัดลอกหมายเลขติดตาม</>}
-                                    </button>
+                    <div className="flex flex-col gap-3">
+                        <p className="text-sm text-[#6B7280] mb-2 font-medium">ระบบจะกลับสู่หน้าหลักใน {countdown} วินาที...</p>
+                        <button onClick={() => navigateTo(backTo)} className="w-full bg-white text-[#4B5563] border border-[#E5E7EB] font-bold py-3.5 rounded-xl hover:bg-[#F9FAFB] transition-colors">
+                            กลับหน้าหลักทันที
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        const HomeView = ({ navigateTo }) => (
+            <div className="max-w-4xl mx-auto px-4 py-6 pb-28 animate-in fade-in duration-300">
+                <div className="bg-gradient-to-br from-[#E11D48] via-[#BE123C] to-[#881337] rounded-3xl p-6 text-white shadow-[0_8px_30px_rgb(200,16,46,0.3)] mb-8 relative overflow-hidden">
+                    <div className="absolute -right-6 top-0 text-white/10 rotate-12 transform scale-110 pointer-events-none">
+                        <i className="ph ph-chat-teardrop-text text-[140px]"></i>
+                    </div>
+                    <div className="absolute right-20 -bottom-10 text-white/10 -rotate-12 transform scale-125 pointer-events-none">
+                        <i className="ph ph-lightbulb text-[120px]"></i>
+                    </div>
+                    <div className="absolute left-16 -top-12 text-white/5 rotate-45 transform scale-110 pointer-events-none">
+                        <i className="ph ph-handshake text-[150px]"></i>
+                    </div>
+                    <div className="absolute -left-10 bottom-2 text-white/5 -rotate-12 transform scale-90 pointer-events-none">
+                        <i className="ph ph-sparkle text-[100px]"></i>
+                    </div>
+
+                    <div className="relative z-10">
+                        <h2 className="text-2xl font-bold mb-2.5">ยินดีต้อนรับสู่พื้นที่ของคุณ</h2>
+                        <p className="text-[#FFE4E6] text-sm md:text-base max-w-md leading-relaxed opacity-95">
+                            ทุกเสียงของนักเรียนมีความหมาย ที่นี่คือพื้นที่ปลอดภัยสำหรับบอกความรู้สึก แสดงความคิดเห็น แจ้งปัญหา ขอความช่วยเหลือ และเสนอไอเดียใหม่ๆ
+                        </p>
+                    </div>
+                </div>
+
+                <h3 className="text-lg font-bold text-[#1F2937] mb-4 flex items-center gap-2">
+                    <i className="ph ph-lightbulb text-[#C8102E] text-[20px] ph-fill"></i>
+                    คุณต้องการทำอะไรในวันนี้?
+                </h3>
+                
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3 md:gap-4 mb-8">
+                    <ActionCard navigateTo={navigateTo} icon="ph-chat-circle" title="ความรู้สึกของฉัน" desc="บอกเล่าความรู้สึกวันนี้" view="feeling" color="bg-blue-50 text-blue-600 border-blue-100" />
+                    <ActionCard navigateTo={navigateTo} icon="ph-chat-teardrop-text" title="ความคิดเห็น" desc="เสนอแนะสิ่งต่างๆ" view="feedback" color="bg-purple-50 text-purple-600 border-purple-100" />
+                    <ActionCard navigateTo={navigateTo} icon="ph-clipboard-text" title="แจ้งปัญหา" desc="ซ่อมแซม, สถานที่" view="issue" color="bg-orange-50 text-orange-600 border-orange-100" />
+                    <ActionCard navigateTo={navigateTo} icon="ph-shield-warning" title="ความปลอดภัย" desc="แจ้งเหตุเร่งด่วน" view="safety" color="bg-red-50 text-[#C8102E] border-red-100" />
+                    <ActionCard navigateTo={navigateTo} icon="ph-handshake" title="ขอความช่วยเหลือ" desc="ปรึกษา, ให้คนช่วย" view="help" color="bg-green-50 text-green-600 border-green-100" />
+                    <ActionCard navigateTo={navigateTo} icon="ph-lightbulb" title="เสนอไอเดีย" desc="บอกไอเดียใหม่ๆ" view="idea" color="bg-yellow-50 text-yellow-600 border-yellow-100" />
+                </div>
+
+                <div className="bg-white rounded-2xl p-5 border border-[#E5E7EB] shadow-sm flex items-start gap-3">
+                    <div className="mt-1 text-[#6B7280]">
+                        <i className="ph ph-shield-check text-[20px]"></i>
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-[#1F2937] mb-1">ความเป็นส่วนตัวของคุณคือสิ่งสำคัญ</h3>
+                        <p className="text-[13px] text-[#6B7280] leading-relaxed">
+                            ระบบนี้รองรับการส่งข้อมูลแบบ <b>ไม่เปิดเผยตัวตน (Anonymous)</b> เพื่อให้นักเรียนสามารถแจ้งเรื่องราวต่างๆ ได้อย่างสบายใจ และข้อมูลทั้งหมดจะถูกจัดการด้วยมาตรฐานความปลอดภัยสูงสุด
+                        </p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const FeelingView = ({ navigateTo, submitTicket }) => {
+            const [selectedFeeling, setSelectedFeeling] = useState(null);
+            const [selectedFactors, setSelectedFactors] = useState([]);
+            const [note, setNote] = useState('');
+            const [isAnonymous, setIsAnonymous] = useState(true);
+            const [isSubmitted, setIsSubmitted] = useState(false);
+            const [trackingId, setTrackingId] = useState(null);
+            const [isLoading, setIsLoading] = useState(false);
+
+            const toggleFactor = (factor) => {
+                if (selectedFactors.includes(factor)) setSelectedFactors(selectedFactors.filter(f => f !== factor));
+                else setSelectedFactors([...selectedFactors, factor]);
+            };
+
+            const handleSubmit = async () => {
+                setIsLoading(true);
+                const detailsText = `ความรู้สึก: ${selectedFeeling}\nปัจจัย: ${selectedFactors.join(', ')}\nเพิ่มเติม: ${note}`;
+                const id = await submitTicket({ type: 'feeling', category: 'ความรู้สึก', details: detailsText, isAnonymous });
+                setTrackingId(id);
+                setIsLoading(false);
+                setIsSubmitted(true);
+            };
+
+            if (isSubmitted) return <SuccessScreen id={trackingId} backTo="home" message="บันทึกความรู้สึกเรียบร้อยแล้ว" navigateTo={navigateTo} />;
+
+            return (
+                <div className="max-w-2xl mx-auto px-4 py-6 pb-28 animate-in slide-in-from-bottom-4">
+                    <button onClick={() => navigateTo('home')} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]">
+                        <i className="ph ph-caret-left text-[16px]"></i> กลับหน้าหลัก
+                    </button>
+                    <h2 className="text-2xl font-bold text-[#1F2937] mb-6">วันนี้คุณรู้สึกอย่างไร?</h2>
+                    
+                    <div className="bg-white rounded-3xl p-6 border border-[#E5E7EB] shadow-sm mb-6">
+                        <div className="flex justify-between items-center gap-2 mb-8">
+                            {FEELING_EMOJIS_DATA.map((item) => (
+                                <button key={item.value} onClick={() => setSelectedFeeling(item.value)} className={`flex flex-col items-center gap-2 transition-all p-2 rounded-2xl ${selectedFeeling === item.value ? 'bg-[#FFF5F6] scale-110 shadow-sm border border-[#FDECEF]' : 'grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-105'}`}>
+                                    <span className="text-4xl md:text-5xl">{item.emoji}</span>
+                                    <span className={`text-xs md:text-sm font-medium ${selectedFeeling === item.value ? 'text-[#C8102E]' : 'text-[#6B7280]'}`}>{item.label}</span>
+                                </button>
+                            ))}
+                        </div>
+
+                        {selectedFeeling && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-semibold text-[#1F2937] mb-3 text-sm md:text-base">อะไรมีผลต่อความรู้สึกของคุณในวันนี้?</h3>
+                                <div className="flex flex-wrap gap-2 mb-6">
+                                    {FEELING_FACTORS_DATA.map((factor) => (
+                                        <button key={factor} onClick={() => toggleFactor(factor)} className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium border transition-all ${selectedFactors.includes(factor) ? 'bg-[#C8102E] text-white border-[#C8102E]' : 'bg-white text-[#4B5563] border-[#E5E7EB]'}`}>{factor}</button>
+                                    ))}
+                                </div>
+                                <div className="mb-6">
+                                    <label className="block font-semibold text-[#1F2937] mb-2 text-sm md:text-base">อยากเล่าอะไรเพิ่มเติมไหม? (ไม่บังคับ)</label>
+                                    <textarea value={note} onChange={(e) => setNote(e.target.value)} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#C8102E] text-sm min-h-[100px]" placeholder="พิมพ์ข้อความของคุณที่นี่..."></textarea>
+                                </div>
+                                <div className="flex items-center gap-3 mb-8 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
+                                    <input type="checkbox" id="anonymous" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 accent-[#C8102E] rounded" />
+                                    <label htmlFor="anonymous" className="text-sm text-[#4B5563] cursor-pointer">บันทึกแบบไม่เปิดเผยตัวตน</label>
+                                </div>
+                                <button onClick={handleSubmit} disabled={isLoading} className="w-full bg-[#C8102E] hover:bg-[#9E0B23] text-white font-bold py-3.5 rounded-xl shadow-md transition-colors">
+                                    {isLoading ? 'กำลังบันทึก...' : 'บันทึกความรู้สึก'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const FeedbackView = ({ navigateTo, submitTicket }) => {
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({ category: '', feedbackType: '', details: '', isAnonymous: true });
+            const [isLoading, setIsLoading] = useState(false);
+            const [trackingId, setTrackingId] = useState(null);
+
+            const categories = ['การเรียน', 'ครู', 'เพื่อน', 'กิจกรรม', 'สถานที่', 'อาหาร', 'ความสะอาด', 'ความปลอดภัย', 'เทคโนโลยี', 'กฎระเบียบ', 'สภานักเรียน', 'อื่น ๆ'];
+            const feedbackTypes = ['ชื่นชม', 'ข้อเสนอแนะ', 'ปัญหา', 'สิ่งที่อยากให้ปรับปรุง', 'ไอเดียใหม่'];
+
+            const handleSubmit = async () => {
+                setIsLoading(true);
+                const id = await submitTicket({ type: 'feedback', title: `[${formData.feedbackType}] ${formData.category}`, ...formData });
+                setTrackingId(id);
+                setIsLoading(false);
+                setStep(5);
+            };
+
+            if (step === 5) return <SuccessScreen id={trackingId} backTo="home" message="ส่งความคิดเห็นเรียบร้อยแล้ว" navigateTo={navigateTo} />;
+
+            return (
+                <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#F3E8FF] rounded-full flex items-center justify-center text-[#9333EA]"><i className="ph ph-chat-teardrop-text text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">แสดงความคิดเห็น</h2>
+                    </div>
+                    <div className="flex items-center mb-8">
+                        {[1, 2, 3, 4].map((s) => (
+                            <React.Fragment key={s}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${step >= s ? 'bg-[#9333EA] border-[#9333EA] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
+                                {s < 4 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#9333EA]' : 'bg-[#E5E7EB]'}`}></div>}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-tag text-[#9333EA] text-[18px]"></i> เรื่องใดที่ต้องการแสดงความเห็น?</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-center text-sm md:text-base ${formData.category === cat ? 'border-[#9333EA] bg-[#FAF5FF] text-[#9333EA] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
                                 </div>
                             </div>
                         )}
-
-                        <div className="flex flex-col gap-3">
-                            <p className="text-sm text-[#6B7280] mb-2 font-medium">ระบบจะกลับสู่หน้าหลักใน {countdown} วินาที...</p>
-                            <button onClick={() => navigateTo(backTo)} className="w-full bg-white text-[#4B5563] border border-[#E5E7EB] font-bold py-3.5 rounded-xl hover:bg-[#F9FAFB] transition-colors">
-                                กลับหน้าหลักทันที
-                            </button>
-                        </div>
+                        {step === 2 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-lightbulb text-[#9333EA] text-[18px]"></i> ประเภทความเห็น</h3>
+                                <div className="flex flex-col gap-3">
+                                    {feedbackTypes.map(type => <button key={type} onClick={() => setFormData({...formData, feedbackType: type})} className={`p-4 rounded-xl border text-left text-sm md:text-base ${formData.feedbackType === type ? 'border-[#9333EA] bg-[#FAF5FF] text-[#9333EA] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{type}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <div>
+                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-file-text text-[#9333EA] text-[18px]"></i> รายละเอียด</h3>
+                                    <textarea placeholder="พิมพ์ความคิดเห็นของคุณที่นี่..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#9333EA] min-h-[150px]"></textarea>
+                                </div>
+                                <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
+                                    <input type="checkbox" id="anonFeedback" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#9333EA] rounded" />
+                                    <label htmlFor="anonFeedback" className="text-sm text-[#4B5563] cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                </div>
+                            </div>
+                        )}
+                        {step === 4 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
+                                    <div><span className="text-[#6B7280] block mb-1">หมวดหมู่</span><span className="font-semibold text-[#9333EA]">{formData.category || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">ประเภท</span><span className="font-medium">{formData.feedbackType || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
+                                </div>
+                            </div>
+                        )}
                     </div>
-                );
+                    <div className="flex gap-3 mt-6">
+                        {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
+                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step === 1 && !formData.category) || (step === 2 && !formData.feedbackType) || (step === 3 && !formData.details)} className="flex-1 bg-[#9333EA] hover:bg-[#7E22CE] disabled:bg-[#D8B4FE] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-[#9333EA] hover:bg-[#7E22CE] text-white font-bold py-3 rounded-xl shadow-md">{isLoading ? 'กำลังส่ง...' : 'ส่งความคิดเห็น'}</button>}
+                    </div>
+                </div>
+            );
+        };
+
+        const SafetyReportView = ({ navigateTo, submitTicket }) => {
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({ category: '', affected: '', location: '', details: '', priority: 'ด่วน', isAnonymous: true });
+            const [isLoading, setIsLoading] = useState(false);
+            const [trackingId, setTrackingId] = useState(null);
+
+            const categories = ['Bullying', 'Cyberbullying', 'การทะเลาะวิวาท', 'การคุกคาม / ล่วงละเมิด', 'สารเสพติด', 'อุบัติเหตุ', 'บุคคลภายนอกบุกรุก', 'อื่นๆ'];
+            const affectedTypes = ['ตัวฉันเอง', 'เพื่อน', 'ผู้อื่น', 'พบเห็นเหตุการณ์'];
+
+            const handleSubmit = async () => {
+                setIsLoading(true);
+                const id = await submitTicket({ type: 'safety', title: `[ความปลอดภัย] ${formData.category}`, ...formData });
+                setTrackingId(id);
+                setIsLoading(false);
+                setStep(5);
             };
 
-            const FeelingView = () => {
-                const [selectedFeeling, setSelectedFeeling] = useState(null);
-                const [selectedFactors, setSelectedFactors] = useState([]);
-                const [note, setNote] = useState('');
-                const [isAnonymous, setIsAnonymous] = useState(true);
-                const [isSubmitted, setIsSubmitted] = useState(false);
-                const [trackingId, setTrackingId] = useState(null);
+            if (step === 5) return <SuccessScreen id={trackingId} backTo="home" message="แจ้งเหตุความปลอดภัยเรียบร้อยแล้ว" navigateTo={navigateTo} />;
 
-                const FEELING_EMOJIS_DATA = [
-                    { emoji: '😀', label: 'ดีมาก', value: 'excellent' },
-                    { emoji: '🙂', label: 'ดี', value: 'good' },
-                    { emoji: '😐', label: 'เฉย ๆ', value: 'neutral' },
-                    { emoji: '🙁', label: 'ไม่ค่อยดี', value: 'bad' },
-                    { emoji: '😢', label: 'แย่', value: 'terrible' },
-                ];
-                
-                const FEELING_FACTORS_DATA = [
-                    'เพื่อน', 'การเรียน', 'ครู', 'กิจกรรม', 'ครอบครัว', 'สถานที่', 
-                    'อาหาร', 'ความปลอดภัย', 'งาน / การบ้าน', 'การเดินทาง', 'เรื่องส่วนตัว', 'อื่น ๆ'
-                ];
-
-                const toggleFactor = (factor) => {
-                    if (selectedFactors.includes(factor)) setSelectedFactors(selectedFactors.filter(f => f !== factor));
-                    else setSelectedFactors([...selectedFactors, factor]);
-                };
-
-                const handleSubmit = async () => {
-                    const detailsText = `ความรู้สึก: ${selectedFeeling}\nปัจจัย: ${selectedFactors.join(', ')}\nเพิ่มเติม: ${note}`;
-                    const id = await submitTicket({ type: 'feeling', category: 'ความรู้สึก', details: detailsText, isAnonymous });
-                    setTrackingId(id);
-                    setIsSubmitted(true);
-                };
-
-                if (isSubmitted) return <SuccessScreen id={trackingId} backTo="home" message="บันทึกความรู้สึกเรียบร้อยแล้ว" />;
-
-                return (
-                    <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-8">
-                        <button onClick={() => navigateTo('home')} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]">
-                            <i className="ph ph-caret-left text-[16px]"></i> กลับหน้าหลัก
-                        </button>
-                        <h2 className="text-2xl font-bold text-[#1F2937] mb-6">วันนี้คุณรู้สึกอย่างไร?</h2>
-                        
-                        <div className="bg-white rounded-3xl p-6 border border-[#E5E7EB] shadow-sm mb-6">
-                            <div className="flex justify-between items-center gap-2 mb-8">
-                                {FEELING_EMOJIS_DATA.map((item) => (
-                                    <button key={item.value} onClick={() => setSelectedFeeling(item.value)} className={`flex flex-col items-center gap-2 transition-all p-2 rounded-2xl ${selectedFeeling === item.value ? 'bg-[#FFF5F6] scale-110 shadow-sm border border-[#FDECEF]' : 'grayscale opacity-60 hover:grayscale-0 hover:opacity-100 hover:scale-105'}`}>
-                                        <span className="text-4xl md:text-5xl">{item.emoji}</span>
-                                        <span className={`text-xs md:text-sm font-medium ${selectedFeeling === item.value ? 'text-[#C8102E]' : 'text-[#6B7280]'}`}>{item.label}</span>
-                                    </button>
-                                ))}
+            return (
+                <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#FEF2F2] rounded-full flex items-center justify-center text-[#DC2626]"><i className="ph ph-shield-warning text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">แจ้งเหตุความปลอดภัย</h2>
+                    </div>
+                    <div className="flex items-center mb-8">
+                        {[1, 2, 3, 4].map((s) => (
+                            <React.Fragment key={s}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 ${step >= s ? 'bg-[#DC2626] border-[#DC2626] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
+                                {s < 4 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#DC2626]' : 'bg-[#E5E7EB]'}`}></div>}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4">เกิดเหตุการณ์อะไรขึ้น?</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-left text-sm md:text-base ${formData.category === cat ? 'border-[#DC2626] bg-[#FEF2F2] text-[#DC2626] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
+                                </div>
                             </div>
-
-                            {selectedFeeling && (
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4">ผู้ที่ได้รับผลกระทบ</h3>
+                                <div className="flex flex-col gap-3">
+                                    {affectedTypes.map(type => <button key={type} onClick={() => setFormData({...formData, affected: type})} className={`p-4 rounded-xl border text-left text-sm md:text-base ${formData.affected === type ? 'border-[#DC2626] bg-[#FEF2F2] text-[#DC2626] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{type}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in space-y-4">
                                 <div>
-                                    <h3 className="font-semibold text-[#1F2937] mb-3 text-sm md:text-base">อะไรมีผลต่อความรู้สึกของคุณในวันนี้?</h3>
-                                    <div className="flex flex-wrap gap-2 mb-6">
-                                        {FEELING_FACTORS_DATA.map((factor) => (
-                                            <button key={factor} onClick={() => toggleFactor(factor)} className={`px-4 py-2 rounded-full text-xs md:text-sm font-medium border transition-all ${selectedFactors.includes(factor) ? 'bg-[#C8102E] text-white border-[#C8102E]' : 'bg-white text-[#4B5563] border-[#E5E7EB]'}`}>{factor}</button>
+                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-map-pin text-[#DC2626] text-[18px]"></i> สถานที่และรายละเอียด</h3>
+                                    <input type="text" placeholder="สถานที่เกิดเหตุ" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#DC2626] mb-3" />
+                                    <textarea placeholder="อธิบายเหตุการณ์..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#DC2626] min-h-[100px]"></textarea>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-sm mb-2">ระดับความเร่งด่วน</h4>
+                                    <div className="flex gap-2">
+                                        {['ทั่วไป', 'ควรตรวจสอบ', 'ด่วน', 'ด่วนมาก'].map(prio => (
+                                            <button key={prio} onClick={() => setFormData({...formData, priority: prio})} className={`flex-1 py-2 rounded-lg text-xs md:text-sm font-semibold border ${formData.priority === prio ? prio.includes('ด่วน') ? 'bg-[#DC2626] text-white border-[#DC2626]' : 'bg-orange-500 text-white border-orange-500' : 'bg-white text-[#6B7280] border-[#E5E7EB]'}`}>{prio}</button>
                                         ))}
                                     </div>
-                                    <div className="mb-6">
-                                        <label className="block font-semibold text-[#1F2937] mb-2 text-sm md:text-base">อยากเล่าอะไรเพิ่มเติมไหม? (ไม่บังคับ)</label>
-                                        <textarea value={note} onChange={(e) => setNote(e.target.value)} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#C8102E] text-sm min-h-[100px]" placeholder="พิมพ์ข้อความของคุณที่นี่..."></textarea>
-                                    </div>
-                                    <div className="flex items-center gap-3 mb-8 p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB]">
-                                        <input type="checkbox" id="anonymous" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 accent-[#C8102E] rounded" />
-                                        <label htmlFor="anonymous" className="text-sm text-[#4B5563] cursor-pointer">บันทึกแบบไม่เปิดเผยตัวตน (Anonymous)</label>
-                                    </div>
-                                    <button onClick={handleSubmit} className="w-full bg-[#C8102E] hover:bg-[#9E0B23] text-white font-bold py-3.5 rounded-xl shadow-md transition-colors">บันทึกความรู้สึก</button>
                                 </div>
-                            )}
-                        </div>
-                    </div>
-                );
-            };
-
-            const FeedbackView = () => {
-                const [step, setStep] = useState(1);
-                const [formData, setFormData] = useState({ category: '', feedbackType: '', details: '', isAnonymous: true });
-                const [isLoading, setIsLoading] = useState(false);
-                const [trackingId, setTrackingId] = useState(null);
-
-                const categories = ['การเรียน', 'ครู', 'เพื่อน', 'กิจกรรม', 'สถานที่', 'อาหาร', 'ความสะอาด', 'ความปลอดภัย', 'เทคโนโลยี', 'กฎระเบียบ', 'สภานักเรียน', 'อื่น ๆ'];
-                const feedbackTypes = ['ชื่นชม', 'ข้อเสนอแนะ', 'ปัญหา', 'สิ่งที่อยากให้ปรับปรุง', 'ไอเดียใหม่'];
-
-                const handleSubmit = async () => {
-                    setIsLoading(true);
-                    const id = await submitTicket({ type: 'feedback', title: `[${formData.feedbackType}] ${formData.category}`, ...formData });
-                    setTrackingId(id);
-                    setIsLoading(false);
-                    setStep(5);
-                };
-
-                if (step === 5) return <SuccessScreen id={trackingId} backTo="home" message="ส่งความคิดเห็นเรียบร้อยแล้ว" />;
-
-                return (
-                    <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-[#F3E8FF] rounded-full flex items-center justify-center text-[#9333EA]"><i className="ph ph-chat-teardrop-text text-[22px] ph-fill"></i></div>
-                            <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">แสดงความคิดเห็น</h2>
-                        </div>
-                        <div className="flex items-center mb-8">
-                            {[1, 2, 3, 4].map((s) => (
-                                <React.Fragment key={s}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${step >= s ? 'bg-[#9333EA] border-[#9333EA] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
-                                    {s < 4 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#9333EA]' : 'bg-[#E5E7EB]'}`}></div>}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                        <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
-                            {step === 1 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-tag text-[#9333EA] text-[18px]"></i> เรื่องใดที่ต้องการแสดงความเห็น?</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-center text-sm md:text-base ${formData.category === cat ? 'border-[#9333EA] bg-[#FAF5FF] text-[#9333EA] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
-                                    </div>
+                                <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
+                                    <input type="checkbox" id="anonSafety" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#DC2626] rounded" />
+                                    <label htmlFor="anonSafety" className="text-sm cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
                                 </div>
-                            )}
-                            {step === 2 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-lightbulb text-[#9333EA] text-[18px]"></i> ประเภทความเห็น</h3>
-                                    <div className="flex flex-col gap-3">
-                                        {feedbackTypes.map(type => <button key={type} onClick={() => setFormData({...formData, feedbackType: type})} className={`p-4 rounded-xl border text-left text-sm md:text-base ${formData.feedbackType === type ? 'border-[#9333EA] bg-[#FAF5FF] text-[#9333EA] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{type}</button>)}
-                                    </div>
-                                </div>
-                            )}
-                            {step === 3 && (
-                                <div className="space-y-4">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-file-text text-[#9333EA] text-[18px]"></i> รายละเอียด</h3>
-                                        <textarea placeholder="พิมพ์ความคิดเห็นของคุณที่นี่..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#9333EA] min-h-[150px]"></textarea>
-                                    </div>
-                                    <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
-                                        <input type="checkbox" id="anonFeedback" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#9333EA] rounded" />
-                                        <label htmlFor="anonFeedback" className="text-sm text-[#4B5563] cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                    </div>
-                                </div>
-                            )}
-                            {step === 4 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
-                                    <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
-                                        <div><span className="text-[#6B7280] block mb-1">หมวดหมู่</span><span className="font-semibold text-[#9333EA]">{formData.category || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">ประเภท</span><span className="font-medium">{formData.feedbackType || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">การระบุตัวตน</span><span className="font-medium">{formData.isAnonymous ? 'ไม่เปิดเผย' : 'เปิดเผย'}</span></div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex gap-3 mt-6">
-                            {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
-                            {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step === 1 && !formData.category) || (step === 2 && !formData.feedbackType) || (step === 3 && !formData.details)} className="flex-1 bg-[#9333EA] hover:bg-[#7E22CE] disabled:bg-[#D8B4FE] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-[#9333EA] hover:bg-[#7E22CE] text-white font-bold py-3 rounded-xl shadow-md">{isLoading ? 'กำลังส่ง...' : 'ส่งความคิดเห็น'}</button>}
-                        </div>
-                    </div>
-                );
-            };
-
-            const SafetyReportView = () => {
-                const [step, setStep] = useState(1);
-                const [formData, setFormData] = useState({ category: '', affected: '', location: '', details: '', priority: 'ด่วน', isAnonymous: true });
-                const [isLoading, setIsLoading] = useState(false);
-                const [trackingId, setTrackingId] = useState(null);
-
-                const categories = ['Bullying', 'Cyberbullying', 'การทะเลาะวิวาท', 'การคุกคาม / ล่วงละเมิด', 'สารเสพติด', 'อุบัติเหตุ', 'บุคคลภายนอกบุกรุก', 'อื่นๆ'];
-                const affectedTypes = ['ตัวฉันเอง', 'เพื่อน', 'ผู้อื่น', 'พบเห็นเหตุการณ์'];
-
-                const handleSubmit = async () => {
-                    setIsLoading(true);
-                    const id = await submitTicket({ type: 'safety', title: `[ความปลอดภัย] ${formData.category}`, ...formData });
-                    setTrackingId(id);
-                    setIsLoading(false);
-                    setStep(5);
-                };
-
-                if (step === 5) return <SuccessScreen id={trackingId} backTo="home" message="แจ้งเหตุความปลอดภัยเรียบร้อยแล้ว" />;
-
-                return (
-                    <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-[#FEF2F2] rounded-full flex items-center justify-center text-[#DC2626]"><i className="ph ph-shield-warning text-[22px] ph-fill"></i></div>
-                            <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">แจ้งเหตุความปลอดภัย</h2>
-                        </div>
-                        <div className="flex items-center mb-8">
-                            {[1, 2, 3, 4].map((s) => (
-                                <React.Fragment key={s}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 ${step >= s ? 'bg-[#DC2626] border-[#DC2626] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
-                                    {s < 4 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#DC2626]' : 'bg-[#E5E7EB]'}`}></div>}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                        <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
-                            {step === 1 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">เกิดเหตุการณ์อะไรขึ้น?</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-left text-sm md:text-base ${formData.category === cat ? 'border-[#DC2626] bg-[#FEF2F2] text-[#DC2626] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
-                                    </div>
-                                </div>
-                            )}
-                            {step === 2 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">ผู้ที่ได้รับผลกระทบ</h3>
-                                    <div className="flex flex-col gap-3">
-                                        {affectedTypes.map(type => <button key={type} onClick={() => setFormData({...formData, affected: type})} className={`p-4 rounded-xl border text-left text-sm md:text-base ${formData.affected === type ? 'border-[#DC2626] bg-[#FEF2F2] text-[#DC2626] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{type}</button>)}
-                                    </div>
-                                </div>
-                            )}
-                            {step === 3 && (
-                                <div className="space-y-4">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-map-pin text-[#DC2626] text-[18px]"></i> สถานที่และรายละเอียด</h3>
-                                        <input type="text" placeholder="สถานที่เกิดเหตุ" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#DC2626] text-sm md:text-base mb-3" />
-                                        <textarea placeholder="อธิบายเหตุการณ์..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#DC2626] text-sm md:text-base min-h-[100px]"></textarea>
-                                    </div>
-                                    <div>
-                                        <h4 className="font-bold text-sm mb-2">ระดับความเร่งด่วน</h4>
-                                        <div className="flex gap-2">
-                                            {['ทั่วไป', 'ควรตรวจสอบ', 'ด่วน', 'ด่วนมาก'].map(prio => (
-                                                <button key={prio} onClick={() => setFormData({...formData, priority: prio})} className={`flex-1 py-2 rounded-lg text-xs md:text-sm font-semibold border ${formData.priority === prio ? prio.includes('ด่วน') ? 'bg-[#DC2626] text-white border-[#DC2626]' : 'bg-orange-500 text-white border-orange-500' : 'bg-white text-[#6B7280] border-[#E5E7EB]'}`}>{prio}</button>
-                                            ))}
-                                        </div>
-                                    </div>
-                                    <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
-                                        <input type="checkbox" id="anonSafety" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#DC2626] rounded" />
-                                        <label htmlFor="anonSafety" className="text-sm cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                    </div>
-                                </div>
-                            )}
-                            {step === 4 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
-                                    <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
-                                        <div><span className="text-[#6B7280] block mb-1">เหตุการณ์</span><span className="font-bold text-[#DC2626]">{formData.category || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">ผู้ได้รับผลกระทบ</span><span className="font-medium">{formData.affected || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">สถานที่</span><span className="font-medium">{formData.location || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex gap-3 mt-6">
-                            {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
-                            {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step === 1 && !formData.category) || (step === 2 && !formData.affected) || (step === 3 && !formData.details)} className="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold py-3 rounded-xl shadow-md">{isLoading ? 'กำลังส่ง...' : 'ยืนยันแจ้งเหตุ'}</button>}
-                        </div>
-                    </div>
-                );
-            };
-
-            const IssueReportView = () => {
-                const [step, setStep] = useState(1);
-                const [formData, setFormData] = useState({ category: '', location: '', details: '', isAnonymous: true, images: [] });
-                const [isLoading, setIsLoading] = useState(false);
-                const [trackingId, setTrackingId] = useState(null);
-
-                const categories = ['ห้องเรียน', 'ห้องน้ำ', 'โรงอาหาร', 'สนามกีฬา', 'อินเทอร์เน็ต', 'ความสะอาด', 'ไฟฟ้า/น้ำประปา', 'อื่น ๆ'];
-
-                const handleImageUpload = (e) => {
-                    const files = Array.from(e.target.files);
-                    if (files.length + formData.images.length > 3) return alert("อัปโหลดได้สูงสุด 3 รูป");
-                    files.forEach(file => {
-                        const reader = new FileReader();
-                        reader.onloadend = () => setFormData(prev => ({ ...prev, images: [...prev.images, reader.result] }));
-                        reader.readAsDataURL(file);
-                    });
-                };
-
-                const removeImage = (index) => {
-                    setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
-                };
-
-                const handleSubmit = async () => {
-                    setIsLoading(true);
-                    const id = await submitTicket({ type: 'issue', title: formData.details.substring(0, 30) + '...', ...formData });
-                    setTrackingId(id);
-                    setIsLoading(false);
-                    setStep(5);
-                };
-
-                if (step === 5) return <SuccessScreen id={trackingId} backTo="home" message="แจ้งปัญหาเรียบร้อยแล้ว" />;
-
-                return (
-                    <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-[#FFF5F6] rounded-full flex items-center justify-center text-[#C8102E]"><i className="ph ph-clipboard-text text-[22px] ph-fill"></i></div>
-                            <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">แจ้งปัญหา</h2>
-                        </div>
-                        <div className="flex items-center mb-8">
-                            {[1, 2, 3, 4].map((s) => (
-                                <React.Fragment key={s}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 ${step >= s ? 'bg-[#C8102E] border-[#C8102E] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
-                                    {s < 4 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#C8102E]' : 'bg-[#E5E7EB]'}`}></div>}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                        <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
-                            {step === 1 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-tag text-[#C8102E] text-[18px]"></i> ปัญหาเกี่ยวกับอะไร?</h3>
-                                    <div className="grid grid-cols-2 gap-3">
-                                        {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-left text-sm md:text-base ${formData.category === cat ? 'border-[#C8102E] bg-[#FFF5F6] text-[#C8102E] font-medium' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
-                                    </div>
-                                </div>
-                            )}
-                            {step === 2 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-map-pin text-[#C8102E] text-[18px]"></i> ระบุสถานที่</h3>
-                                    <input type="text" placeholder="เช่น อาคาร 3 ห้อง 301" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#C8102E] text-sm md:text-base" />
-                                </div>
-                            )}
-                            {step === 3 && (
-                                <div className="space-y-4">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><i className="ph ph-file-text text-[#C8102E] text-[18px]"></i> รายละเอียดปัญหา</h3>
-                                        <textarea placeholder="อธิบายปัญหา..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#C8102E] text-sm md:text-base min-h-[120px]"></textarea>
-                                    </div>
-                                    <div>
-                                        <label className="block font-semibold mb-2 text-sm md:text-base flex items-center gap-2"><i className="ph ph-image text-[#C8102E] text-[18px]"></i> แนบรูปภาพ (สูงสุด 3 รูป)</label>
-                                        <div className="flex items-center justify-center w-full">
-                                            <label className="flex flex-col items-center justify-center w-full h-28 md:h-32 border-2 border-[#E5E7EB] border-dashed rounded-xl cursor-pointer bg-[#F7F8FA] hover:bg-gray-100">
-                                                <i className="ph ph-cloud-arrow-up text-[28px] text-[#9CA3AF] mb-2"></i>
-                                                <p className="text-sm font-medium text-[#6B7280]">คลิกเพื่ออัปโหลดรูปภาพ</p>
-                                                <input type="file" accept="image/png, image/jpeg" multiple className="hidden" onChange={handleImageUpload} />
-                                            </label>
-                                        </div>
-                                        {formData.images.length > 0 && (
-                                            <div className="flex flex-wrap gap-3 mt-4">
-                                                {formData.images.map((img, i) => (
-                                                    <div key={i} className="relative w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden border border-[#E5E7EB]">
-                                                        <img src={img} alt="preview" className="w-full h-full object-cover" />
-                                                        <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-white/80 text-red-500 rounded-full p-1 hover:bg-white"><i className="ph ph-x text-[12px]"></i></button>
-                                                    </div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                    <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
-                                        <input type="checkbox" id="anonIssue" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#C8102E] rounded" />
-                                        <label htmlFor="anonIssue" className="text-sm text-[#4B5563] cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                    </div>
-                                </div>
-                            )}
-                            {step === 4 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
-                                    <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
-                                        <div><span className="text-[#6B7280] block mb-1">หมวดหมู่</span><span className="font-medium text-[#C8102E]">{formData.category || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">สถานที่</span><span className="font-medium">{formData.location || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">รูปภาพแนบ</span><span className="font-medium">{formData.images.length > 0 ? `${formData.images.length} รูป` : '-'}</span></div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex gap-3 mt-6">
-                            {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
-                            {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={step === 1 && !formData.category} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] text-white font-bold py-3 rounded-xl shadow-md">{isLoading ? 'กำลังส่ง...' : 'ยืนยันแจ้งปัญหา'}</button>}
-                        </div>
-                    </div>
-                );
-            };
-
-            const HelpView = () => {
-                const [step, setStep] = useState(1);
-                const [formData, setFormData] = useState({ category: '', details: '', isAnonymous: true, contactBack: false, contactInfo: '' });
-                const [isLoading, setIsLoading] = useState(false);
-                const [trackingId, setTrackingId] = useState(null);
-
-                const categories = ['การเรียน', 'เพื่อน', 'ความขัดแย้ง', 'ครอบครัว', 'ความปลอดภัย', 'ต้องการพูดคุยกับครู', 'อื่น ๆ'];
-
-                const handleSubmit = async () => {
-                    setIsLoading(true);
-                    const id = await submitTicket({ type: 'help', title: `ขอความช่วยเหลือ: ${formData.category}`, ...formData });
-                    setTrackingId(id);
-                    setIsLoading(false);
-                    setStep(4);
-                };
-
-                if (step === 4) return <SuccessScreen id={trackingId} backTo="home" message="ส่งคำขอความช่วยเหลือเรียบร้อยแล้ว" />;
-
-                return (
-                    <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-[#FFF5F6] rounded-full flex items-center justify-center text-[#C8102E]"><i className="ph ph-handshake text-[22px] ph-fill"></i></div>
-                            <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">ขอความช่วยเหลือ</h2>
-                        </div>
-                        <div className="flex items-center mb-8">
-                            {[1, 2, 3].map((s) => (
-                                <React.Fragment key={s}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 ${step >= s ? 'bg-[#C8102E] border-[#C8102E] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
-                                    {s < 3 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#C8102E]' : 'bg-[#E5E7EB]'}`}></div>}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                        <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
-                            {step === 1 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">ต้องการให้ช่วยเหลือด้านใด?</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                                        {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-left text-sm md:text-base ${formData.category === cat ? 'border-[#C8102E] bg-[#FFF5F6] text-[#C8102E] font-medium shadow-sm' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
-                                    </div>
-                                </div>
-                            )}
-                            {step === 2 && (
-                                <div className="space-y-6">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-3">เล่าให้เราฟังหน่อย (ไม่บังคับ)</h3>
-                                        <textarea placeholder="อธิบายสิ่งที่คุณต้องการให้เราช่วยเหลือ..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 text-sm md:text-base focus:outline-none focus:border-[#C8102E] min-h-[120px]"></textarea>
-                                    </div>
-                                    <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] space-y-4">
-                                        <div className="flex items-start gap-3">
-                                            <input type="checkbox" id="contactBack" checked={formData.contactBack} onChange={() => setFormData({...formData, contactBack: !formData.contactBack})} className="w-5 h-5 mt-0.5 accent-[#C8102E] rounded" />
-                                            <label htmlFor="contactBack" className="text-sm font-medium cursor-pointer">ต้องการให้โรงเรียนติดต่อกลับ</label>
-                                        </div>
-                                        {formData.contactBack && (
-                                            <div className="pl-8 animate-in fade-in slide-in-from-top-2">
-                                                <input type="text" placeholder="ระบุเบอร์โทร หรือ Line ID" value={formData.contactInfo} onChange={(e) => setFormData({...formData, contactInfo: e.target.value})} className="w-full bg-white border border-[#E5E7EB] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#C8102E]" />
-                                            </div>
-                                        )}
-                                        <div className="flex items-center gap-3 pt-2 border-t border-[#E5E7EB]">
-                                            <input type="checkbox" id="anonHelp" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#C8102E] rounded" />
-                                            <label htmlFor="anonHelp" className="text-sm text-[#4B5563] cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                            {step === 3 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
-                                    <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
-                                        <div><span className="text-[#6B7280] block mb-1">ด้านที่ช่วยเหลือ</span><span className="font-medium text-[#C8102E]">{formData.category || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || 'ไม่ได้ระบุ'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">การติดต่อ</span><span className="font-medium">{formData.contactBack ? `ต้องการ (${formData.contactInfo})` : 'ไม่ต้องการ'}</span></div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex gap-3 mt-6">
-                            {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
-                            {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={step === 1 && !formData.category} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading || (formData.contactBack && !formData.contactInfo)} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl shadow-md">ยืนยันขอความช่วยเหลือ</button>}
-                        </div>
-                    </div>
-                );
-            };
-
-            const IdeaView = () => {
-                const [step, setStep] = useState(1);
-                const [formData, setFormData] = useState({ category: '', details: '', isAnonymous: true });
-                const [isLoading, setIsLoading] = useState(false);
-                const [trackingId, setTrackingId] = useState(null);
-
-                const categories = ['กิจกรรมใหม่', 'สิ่งอำนวยความสะดวก', 'การเรียน', 'เทคโนโลยี', 'สิ่งแวดล้อม', 'กฎระเบียบ', 'อื่น ๆ'];
-
-                const handleSubmit = async () => {
-                    setIsLoading(true);
-                    const id = await submitTicket({ type: 'idea', title: `[ไอเดีย] ${formData.category}`, ...formData });
-                    setTrackingId(id);
-                    setIsLoading(false);
-                    setStep(4);
-                };
-
-                if (step === 4) return <SuccessScreen id={trackingId} backTo="home" message="ขอบคุณสำหรับไอเดียดีๆ" />;
-
-                return (
-                    <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-8">
-                        <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 bg-[#FEF9C3] rounded-full flex items-center justify-center text-[#CA8A04]"><i className="ph ph-lightbulb text-[22px] ph-fill"></i></div>
-                            <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">เสนอไอเดียใหม่</h2>
-                        </div>
-                        <div className="flex items-center mb-8">
-                            {[1, 2, 3].map((s) => (
-                                <React.Fragment key={s}>
-                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 ${step >= s ? 'bg-[#CA8A04] border-[#CA8A04] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
-                                    {s < 3 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#CA8A04]' : 'bg-[#E5E7EB]'}`}></div>}
-                                </React.Fragment>
-                            ))}
-                        </div>
-                        <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
-                            {step === 1 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-tag text-[#CA8A04] text-[18px]"></i> หมวดหมู่ไอเดียของคุณ</h3>
-                                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                                        {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-center text-sm md:text-base ${formData.category === cat ? 'border-[#CA8A04] bg-[#FEFCE8] text-[#CA8A04] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
-                                    </div>
-                                </div>
-                            )}
-                            {step === 2 && (
-                                <div className="space-y-4">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-file-text text-[#CA8A04] text-[18px]"></i> อธิบายไอเดียของคุณ</h3>
-                                        <textarea placeholder="คุณอยากทำอะไร เพื่อปรับปรุงโรงเรียน..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#CA8A04] text-sm md:text-base min-h-[150px]"></textarea>
-                                    </div>
-                                    <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
-                                        <input type="checkbox" id="anonIdea" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#CA8A04] rounded" />
-                                        <label htmlFor="anonIdea" className="text-sm cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                    </div>
-                                </div>
-                            )}
-                            {step === 3 && (
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
-                                    <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
-                                        <div><span className="text-[#6B7280] block mb-1">หมวดหมู่ไอเดีย</span><span className="font-semibold text-[#CA8A04]">{formData.category || '-'}</span></div>
-                                        <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                        <div className="flex gap-3 mt-6">
-                            {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
-                            {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={(step === 1 && !formData.category) || (step === 2 && !formData.details)} className="flex-1 bg-[#CA8A04] hover:bg-[#A16207] disabled:bg-[#FDE047] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-[#CA8A04] hover:bg-[#A16207] text-white font-bold py-3 rounded-xl shadow-md">ยืนยันเสนอไอเดีย</button>}
-                        </div>
-                    </div>
-                );
-            };
-
-            const TrackingView = () => {
-                const [searchId, setSearchId] = useState('');
-                const [result, setResult] = useState(null);
-                const [hasSearched, setHasSearched] = useState(false);
-
-                const handleSearch = () => {
-                    setHasSearched(true);
-                    const found = tickets.find(t => t.id === searchId);
-                    setResult(found || null);
-                };
-
-                return (
-                    <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-8">
-                        <h2 className="text-xl md:text-2xl font-bold text-[#1F2937] mb-6 flex items-center gap-2">
-                            <i className="ph ph-magnifying-glass text-[#C8102E] text-[24px]"></i> ติดตามสถานะ
-                        </h2>
-                        <div className="bg-white rounded-3xl p-5 border border-[#E5E7EB] shadow-sm mb-6">
-                            <label className="block font-medium text-[#1F2937] mb-2 text-sm">กรอกหมายเลขติดตาม (Tracking ID)</label>
-                            <div className="flex gap-2">
-                                <input type="text" placeholder="เช่น KM-2026-0001" value={searchId} onChange={(e) => setSearchId(e.target.value.toUpperCase())} className="flex-1 bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 uppercase font-mono text-sm md:text-base focus:outline-none focus:border-[#C8102E]" />
-                                <button onClick={handleSearch} className="bg-[#1F2937] hover:bg-black text-white px-5 rounded-xl font-medium transition-colors text-sm md:text-base">ค้นหา</button>
-                            </div>
-                        </div>
-                        {hasSearched && !result && (
-                            <div className="text-center py-10 bg-white rounded-3xl border border-[#E5E7EB] animate-in fade-in">
-                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mx-auto mb-3">
-                                    <i className="ph ph-magnifying-glass text-[24px]"></i>
-                                </div>
-                                <h3 className="font-bold text-base md:text-lg text-[#1F2937]">ไม่พบข้อมูล</h3>
-                                <p className="text-sm text-[#6B7280]">โปรดตรวจสอบหมายเลขและลองใหม่อีกครั้ง</p>
                             </div>
                         )}
-                        {result && (
-                            <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm animate-in slide-in-from-bottom-4">
-                                <div className="flex justify-between items-start mb-4 border-b border-[#E5E7EB] pb-4">
-                                    <div>
-                                        <span className="text-[11px] md:text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-600 rounded-md mb-2 inline-block">
-                                            {result.category}
-                                        </span>
-                                        <h3 className="font-bold text-base md:text-lg text-[#1F2937]">{result.title}</h3>
-                                        <p className="text-xs md:text-sm text-[#6B7280] font-mono mt-1">ID: {result.id}</p>
-                                    </div>
+                        {step === 4 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
+                                    <div><span className="text-[#6B7280] block mb-1">เหตุการณ์</span><span className="font-bold text-[#DC2626]">{formData.category || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">ผู้ได้รับผลกระทบ</span><span className="font-medium">{formData.affected || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">สถานที่</span><span className="font-medium">{formData.location || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
                                 </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                        {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
+                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={(step === 1 && !formData.category) || (step === 2 && !formData.affected) || (step === 3 && !formData.details)} className="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-[#DC2626] hover:bg-[#B91C1C] text-white font-bold py-3 rounded-xl shadow-md">{isLoading ? 'กำลังส่ง...' : 'ยืนยันแจ้งเหตุ'}</button>}
+                    </div>
+                </div>
+            );
+        };
 
-                                <div className="mb-6 space-y-2 text-xs md:text-sm">
-                                    {result.location && result.location !== '-' && <p><span className="font-medium text-[#1F2937]">สถานที่:</span> <span className="text-[#6B7280]">{result.location}</span></p>}
-                                    <p><span className="font-medium text-[#1F2937]">รายละเอียด:</span> <span className="text-[#6B7280]">{result.details || '-'}</span></p>
-                                    {result.images && result.images.length > 0 && (
-                                        <div className="mt-3">
-                                            <p className="font-medium text-[#1F2937] mb-2">รูปภาพแนบ:</p>
-                                            <div className="flex flex-wrap gap-2">
-                                                {result.images.map((img, index) => (
-                                                    <img key={index} src={img} alt="attached" className="w-20 h-20 object-cover rounded-lg border border-[#E5E7EB]" />
-                                                ))}
-                                            </div>
+        const IssueReportView = ({ navigateTo, submitTicket }) => {
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({ category: '', location: '', details: '', isAnonymous: true, images: [] });
+            const [isLoading, setIsLoading] = useState(false);
+            const [trackingId, setTrackingId] = useState(null);
+
+            const categories = ['ห้องเรียน', 'ห้องน้ำ', 'โรงอาหาร', 'สนามกีฬา', 'อินเทอร์เน็ต', 'ความสะอาด', 'ไฟฟ้า/น้ำประปา', 'อื่น ๆ'];
+
+            const handleImageUpload = (e) => {
+                const files = Array.from(e.target.files);
+                if (files.length + formData.images.length > 3) return alert("อัปโหลดได้สูงสุด 3 รูป");
+                
+                files.forEach(file => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => setFormData(prev => ({ ...prev, images: [...prev.images, reader.result] }));
+                    reader.readAsDataURL(file);
+                });
+            };
+
+            const removeImage = (index) => {
+                setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== index) }));
+            };
+
+            const handleSubmit = async () => {
+                setIsLoading(true);
+                const id = await submitTicket({ type: 'issue', title: formData.details.substring(0, 30) + '...', ...formData });
+                setTrackingId(id);
+                setIsLoading(false);
+                setStep(5);
+            };
+
+            if (step === 5) return <SuccessScreen id={trackingId} backTo="home" message="แจ้งปัญหาเรียบร้อยแล้ว" navigateTo={navigateTo} />;
+
+            return (
+                <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#FFF5F6] rounded-full flex items-center justify-center text-[#C8102E]"><i className="ph ph-clipboard-text text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">แจ้งปัญหา</h2>
+                    </div>
+                    <div className="flex items-center mb-8">
+                        {[1, 2, 3, 4].map((s) => (
+                            <React.Fragment key={s}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 ${step >= s ? 'bg-[#C8102E] border-[#C8102E] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
+                                {s < 4 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#C8102E]' : 'bg-[#E5E7EB]'}`}></div>}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-tag text-[#C8102E] text-[18px]"></i> ปัญหาเกี่ยวกับอะไร?</h3>
+                                <div className="grid grid-cols-2 gap-3">
+                                    {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-left text-sm md:text-base ${formData.category === cat ? 'border-[#C8102E] bg-[#FFF5F6] text-[#C8102E] font-medium' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-map-pin text-[#C8102E] text-[18px]"></i> ระบุสถานที่</h3>
+                                <input type="text" placeholder="เช่น อาคาร 3 ห้อง 301" value={formData.location} onChange={(e) => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#C8102E] text-sm md:text-base" />
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3 flex items-center gap-2"><i className="ph ph-file-text text-[#C8102E] text-[18px]"></i> รายละเอียดปัญหา</h3>
+                                    <textarea placeholder="อธิบายปัญหา..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#C8102E] text-sm md:text-base min-h-[120px]"></textarea>
+                                </div>
+                                <div>
+                                    <label className="block font-semibold mb-2 text-sm md:text-base flex items-center gap-2"><i className="ph ph-image text-[#C8102E] text-[18px]"></i> แนบรูปภาพ (สูงสุด 3 รูป)</label>
+                                    <div className="flex items-center justify-center w-full">
+                                        <label className="flex flex-col items-center justify-center w-full h-28 md:h-32 border-2 border-[#E5E7EB] border-dashed rounded-xl cursor-pointer bg-[#F7F8FA] hover:bg-gray-100">
+                                            <i className="ph ph-cloud-arrow-up text-[28px] text-[#9CA3AF] mb-2"></i>
+                                            <p className="text-sm font-medium text-[#6B7280]">คลิกเพื่ออัปโหลดรูปภาพ</p>
+                                            <input type="file" accept="image/png, image/jpeg" multiple className="hidden" onChange={handleImageUpload} />
+                                        </label>
+                                    </div>
+                                    {formData.images.length > 0 && (
+                                        <div className="flex flex-wrap gap-3 mt-4">
+                                            {formData.images.map((img, i) => (
+                                                <div key={i} className="relative w-20 h-20 md:w-24 md:h-24 rounded-xl overflow-hidden border border-[#E5E7EB]">
+                                                    <img src={img} alt="preview" className="w-full h-full object-cover" />
+                                                    <button onClick={() => removeImage(i)} className="absolute top-1 right-1 bg-white/80 text-red-500 rounded-full p-1 hover:bg-white"><i className="ph ph-x text-[12px]"></i></button>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </div>
-
-                                <div className="relative pl-6 space-y-6 before:absolute before:inset-y-0 before:left-2.5 before:w-0.5 before:bg-[#E5E7EB]">
-                                    <div className="relative">
-                                        <div className="absolute -left-6 w-5 h-5 rounded-full bg-[#16A34A] border-4 border-white flex items-center justify-center"></div>
-                                        <h4 className="font-bold text-xs md:text-sm">ส่งเรื่องเรียบร้อย</h4>
-                                        <p className="text-[10px] md:text-xs text-[#6B7280]">{result.date}</p>
-                                    </div>
-                                    <div className="relative">
-                                        <div className={`absolute -left-6 w-5 h-5 rounded-full border-4 border-white flex items-center justify-center ${result.status === 'pending' ? 'bg-[#F59E0B] shadow-[0_0_0_2px_#F59E0B_inset] animate-pulse' : 'bg-[#16A34A]'}`}></div>
-                                        <h4 className={`font-bold text-xs md:text-sm ${result.status === 'pending' ? 'text-[#F59E0B]' : 'text-[#1F2937]'}`}>รับเรื่อง / กำลังตรวจสอบ</h4>
-                                    </div>
-                                    <div className="relative">
-                                        <div className={`absolute -left-6 w-5 h-5 rounded-full border-4 border-white flex items-center justify-center ${result.status === 'resolved' ? 'bg-[#16A34A]' : 'bg-[#E5E7EB]'}`}></div>
-                                        <h4 className={`font-bold text-xs md:text-sm ${result.status === 'resolved' ? 'text-[#16A34A]' : 'text-[#9CA3AF]'}`}>ดำเนินการเสร็จสิ้น</h4>
-                                    </div>
+                                <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
+                                    <input type="checkbox" id="anonIssue" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#C8102E] rounded" />
+                                    <label htmlFor="anonIssue" className="text-sm text-[#4B5563] cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                </div>
+                            </div>
+                        )}
+                        {step === 4 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
+                                    <div><span className="text-[#6B7280] block mb-1">หมวดหมู่</span><span className="font-medium text-[#C8102E]">{formData.category || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">สถานที่</span><span className="font-medium">{formData.location || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
                                 </div>
                             </div>
                         )}
                     </div>
-                );
-            };
-
-            const AdminLogin = () => {
-                const [email, setEmail] = useState('');
-                const [password, setPassword] = useState('');
-
-                const handleLogin = (e) => {
-                    e.preventDefault();
-                    if (email && password) {
-                        setIsAdminAuth(true);
-                        setCurrentView('admin-dashboard');
-                    }
-                };
-
-                return (
-                    <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-4">
-                        <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-[#E5E7EB] animate-in zoom-in-95">
-                            <div className="w-16 h-16 bg-[#C8102E] rounded-2xl mx-auto flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-6">KM</div>
-                            <h2 className="text-2xl font-bold text-center text-[#1F2937] mb-2">เข้าสู่ระบบผู้ดูแล</h2>
-                            <p className="text-center text-[#6B7280] mb-8 text-sm">พิมพ์อะไรก็ได้เพื่อทดสอบ (เช่น admin / 1234)</p>
-                            <form onSubmit={handleLogin} className="space-y-4">
-                                <input type="text" required placeholder="ชื่อผู้ใช้" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-[#C8102E] transition-all" />
-                                <input type="password" required placeholder="รหัสผ่าน" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-[#C8102E] transition-all" />
-                                <button type="submit" className="w-full bg-[#1F2937] hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors shadow-md mt-6">เข้าสู่ระบบ</button>
-                                <button type="button" onClick={() => setCurrentView('home')} className="w-full text-sm text-[#6B7280] hover:text-[#C8102E] py-2 mt-2">กลับหน้าหลัก</button>
-                            </form>
-                        </div>
-                    </div>
-                );
-            };
-
-            const AdminDashboard = () => {
-                return (
-                    <div className="flex h-screen bg-[#F3F4F6] overflow-hidden w-full">
-                        <div className="w-64 bg-white border-r border-[#E5E7EB] flex flex-col shadow-sm hidden md:flex">
-                            <div className="p-4 border-b border-[#E5E7EB] flex items-center gap-3">
-                                <div className="w-8 h-8 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold text-xs">KM</div>
-                                <span className="font-bold text-[#1F2937]">Admin Panel</span>
-                            </div>
-                            <div className="p-4 space-y-1 flex-1">
-                                <button className="w-full flex items-center gap-3 p-3 rounded-xl text-sm bg-[#FFF5F6] text-[#C8102E] font-bold"><i className="ph ph-squares-four text-[20px]"></i> แดชบอร์ด</button>
-                            </div>
-                            <div className="p-4 border-t border-[#E5E7EB]">
-                                <button onClick={() => { setIsAdminAuth(false); setCurrentView('home'); }} className="flex items-center gap-2 text-[#6B7280] hover:text-[#DC2626] w-full p-2 rounded-lg transition-colors"><i className="ph ph-sign-out text-[18px]"></i> ออกจากระบบ</button>
-                            </div>
-                        </div>
-
-                        <div className="flex-1 flex flex-col h-screen overflow-y-auto w-full">
-                            <div className="bg-white px-6 py-4 border-b border-[#E5E7EB] flex justify-between items-center sticky top-0 z-10 shadow-sm">
-                                <h2 className="text-xl font-bold text-[#1F2937]">ภาพรวมระบบ</h2>
-                                <div className="flex items-center gap-4">
-                                    <div className="flex items-center gap-2"><div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"><i className="ph ph-user text-[16px] text-gray-500"></i></div><span className="text-sm font-medium hidden sm:block">Super Admin</span></div>
-                                </div>
-                            </div>
-
-                            <div className="p-4 md:p-6 space-y-6">
-                                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                                    <StatCard title="เรื่องทั้งหมด" value={tickets.length.toString()} icon="ph-clipboard-text" color="text-[#C8102E]" bg="bg-red-50" />
-                                    <StatCard title="รอดำเนินการ" value={tickets.filter(t => t.status === 'pending').length.toString()} icon="ph-clock" color="text-[#F59E0B]" bg="bg-yellow-50" />
-                                    <StatCard title="แก้ไขแล้ว" value={tickets.filter(t => t.status === 'resolved').length.toString()} icon="ph-check-circle" color="text-[#16A34A]" bg="bg-green-50" />
-                                </div>
-
-                                <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm overflow-hidden w-full">
-                                    <div className="p-5 border-b border-[#E5E7EB] flex justify-between items-center bg-[#F9FAFB]">
-                                        <h3 className="font-bold text-[#1F2937]">รายการล่าสุด</h3>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-sm text-left whitespace-nowrap">
-                                            <thead className="bg-gray-50 text-gray-500 border-b">
-                                                <tr><th className="px-4 py-3 font-medium">Tracking ID</th><th className="px-4 py-3 font-medium">หมวดหมู่</th><th className="px-4 py-3 font-medium">หัวข้อ</th><th className="px-4 py-3 font-medium">สถานะ</th></tr>
-                                            </thead>
-                                            <tbody>
-                                                {tickets.map((t) => (
-                                                    <tr key={t.id} className="border-b hover:bg-gray-50 transition-colors">
-                                                        <td className="px-4 py-3 font-mono text-gray-600">{t.id}</td>
-                                                        <td className="px-4 py-3"><span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-600">{t.category}</span></td>
-                                                        <td className="px-4 py-3 font-medium text-[#1F2937] max-w-[200px] truncate">{t.title}</td>
-                                                        <td className="px-4 py-3 text-amber-600 font-medium">{t.status === 'pending' ? 'รอดำเนินการ' : t.status === 'investigating' ? 'กำลังตรวจสอบ' : 'แก้ไขแล้ว'}</td>
-                                                    </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
-            const StatCard = ({ title, value, icon, color, bg }) => (
-                <div className="bg-white p-4 md:p-5 rounded-2xl border border-[#E5E7EB] shadow-sm flex items-center gap-3 md:gap-4">
-                    <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${bg} ${color}`}>
-                        <i className={`ph ${icon} text-[20px] md:text-[24px]`}></i>
-                    </div>
-                    <div>
-                        <p className="text-xs md:text-sm text-[#6B7280] font-medium">{title}</p>
-                        <p className="text-xl md:text-2xl font-bold text-[#1F2937]">{value}</p>
+                    <div className="flex gap-3 mt-6">
+                        {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
+                        {step < 4 ? <button onClick={() => setStep(step + 1)} disabled={step === 1 && !formData.category} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] text-white font-bold py-3 rounded-xl shadow-md">{isLoading ? 'กำลังส่ง...' : 'ยืนยันแจ้งปัญหา'}</button>}
                     </div>
                 </div>
             );
+        };
+
+        const HelpView = ({ navigateTo, submitTicket }) => {
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({ category: '', details: '', isAnonymous: true, contactBack: false, contactInfo: '' });
+            const [isLoading, setIsLoading] = useState(false);
+            const [trackingId, setTrackingId] = useState(null);
+
+            const categories = ['การเรียน', 'เพื่อน', 'ความขัดแย้ง', 'ครอบครัว', 'ความปลอดภัย', 'ต้องการพูดคุยกับครู', 'อื่น ๆ'];
+
+            const handleSubmit = async () => {
+                setIsLoading(true);
+                const id = await submitTicket({ type: 'help', title: `ขอความช่วยเหลือ: ${formData.category}`, ...formData });
+                setTrackingId(id);
+                setIsLoading(false);
+                setStep(4);
+            };
+
+            if (step === 4) return <SuccessScreen id={trackingId} backTo="home" message="ส่งคำขอความช่วยเหลือเรียบร้อยแล้ว" navigateTo={navigateTo} />;
 
             return (
-                <div className="min-h-screen flex justify-center bg-gray-100">
+                <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#FFF5F6] rounded-full flex items-center justify-center text-[#C8102E]"><i className="ph ph-handshake text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">ขอความช่วยเหลือ</h2>
+                    </div>
+                    <div className="flex items-center mb-8">
+                        {[1, 2, 3].map((s) => (
+                            <React.Fragment key={s}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 ${step >= s ? 'bg-[#C8102E] border-[#C8102E] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
+                                {s < 3 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#C8102E]' : 'bg-[#E5E7EB]'}`}></div>}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4">ต้องการให้ช่วยเหลือด้านใด?</h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                    {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-4 py-3 rounded-xl border text-left text-sm md:text-base ${formData.category === cat ? 'border-[#C8102E] bg-[#FFF5F6] text-[#C8102E] font-medium shadow-sm' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in space-y-6">
+                                <div>
+                                    <h3 className="font-bold text-lg mb-3">เล่าให้เราฟังหน่อย (ไม่บังคับ)</h3>
+                                    <textarea placeholder="อธิบายสิ่งที่คุณต้องการให้เราช่วยเหลือ..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 text-sm md:text-base focus:outline-none focus:border-[#C8102E] min-h-[120px]"></textarea>
+                                </div>
+                                <div className="p-4 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] space-y-4">
+                                    <div className="flex items-start gap-3">
+                                        <input type="checkbox" id="contactBack" checked={formData.contactBack} onChange={() => setFormData({...formData, contactBack: !formData.contactBack})} className="w-5 h-5 mt-0.5 accent-[#C8102E] rounded" />
+                                        <label htmlFor="contactBack" className="text-sm font-medium cursor-pointer">ต้องการให้โรงเรียนติดต่อกลับ</label>
+                                    </div>
+                                    {formData.contactBack && (
+                                        <div className="pl-8 animate-in fade-in">
+                                            <input type="text" placeholder="ระบุเบอร์โทร หรือ Line ID" value={formData.contactInfo} onChange={(e) => setFormData({...formData, contactInfo: e.target.value})} className="w-full bg-white border border-[#E5E7EB] rounded-lg p-2.5 text-sm focus:outline-none focus:border-[#C8102E]" />
+                                        </div>
+                                    )}
+                                    <div className="flex items-center gap-3 pt-2 border-t border-[#E5E7EB]">
+                                        <input type="checkbox" id="anonHelp" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#C8102E] rounded" />
+                                        <label htmlFor="anonHelp" className="text-sm text-[#4B5563] cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
+                                    <div><span className="text-[#6B7280] block mb-1">ด้านที่ช่วยเหลือ</span><span className="font-medium text-[#C8102E]">{formData.category || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || 'ไม่ได้ระบุ'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">การติดต่อ</span><span className="font-medium">{formData.contactBack ? `ต้องการ (${formData.contactInfo})` : 'ไม่ต้องการ'}</span></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                        {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
+                        {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={step === 1 && !formData.category} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading || (formData.contactBack && !formData.contactInfo)} className="flex-1 bg-[#C8102E] hover:bg-[#9E0B23] disabled:bg-[#FCA5A5] text-white font-bold py-3 rounded-xl shadow-md">{isLoading ? 'กำลังส่ง...' : 'ยืนยันขอความช่วยเหลือ'}</button>}
+                    </div>
+                </div>
+            );
+        };
+
+        const IdeaView = ({ navigateTo, submitTicket }) => {
+            const [step, setStep] = useState(1);
+            const [formData, setFormData] = useState({ category: '', details: '', isAnonymous: true });
+            const [isLoading, setIsLoading] = useState(false);
+            const [trackingId, setTrackingId] = useState(null);
+
+            const categories = ['กิจกรรมใหม่', 'สิ่งอำนวยความสะดวก', 'การเรียน', 'เทคโนโลยี', 'สิ่งแวดล้อม', 'กฎระเบียบ', 'อื่น ๆ'];
+
+            const handleSubmit = async () => {
+                setIsLoading(true);
+                const id = await submitTicket({ type: 'idea', title: `[ไอเดีย] ${formData.category}`, ...formData });
+                setTrackingId(id);
+                setIsLoading(false);
+                setStep(4);
+            };
+
+            if (step === 4) return <SuccessScreen id={trackingId} backTo="home" message="ขอบคุณสำหรับไอเดียดีๆ" navigateTo={navigateTo} />;
+
+            return (
+                <div className="max-w-2xl mx-auto px-4 py-6 pb-28">
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-[#FEF9C3] rounded-full flex items-center justify-center text-[#CA8A04]"><i className="ph ph-lightbulb text-[22px] ph-fill"></i></div>
+                        <h2 className="text-xl md:text-2xl font-bold text-[#1F2937]">เสนอไอเดียใหม่</h2>
+                    </div>
+                    <div className="flex items-center mb-8">
+                        {[1, 2, 3].map((s) => (
+                            <React.Fragment key={s}>
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold border-2 ${step >= s ? 'bg-[#CA8A04] border-[#CA8A04] text-white' : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`}>{step > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}</div>
+                                {s < 3 && <div className={`flex-1 h-1 mx-2 rounded ${step > s ? 'bg-[#CA8A04]' : 'bg-[#E5E7EB]'}`}></div>}
+                            </React.Fragment>
+                        ))}
+                    </div>
+                    <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm min-h-[300px]">
+                        {step === 1 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-tag text-[#CA8A04] text-[18px]"></i> หมวดหมู่ไอเดียของคุณ</h3>
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                    {categories.map(cat => <button key={cat} onClick={() => setFormData({...formData, category: cat})} className={`p-3 rounded-xl border text-center text-sm md:text-base ${formData.category === cat ? 'border-[#CA8A04] bg-[#FEFCE8] text-[#CA8A04] font-semibold' : 'border-[#E5E7EB] hover:bg-[#F9FAFB]'}`}>{cat}</button>)}
+                                </div>
+                            </div>
+                        )}
+                        {step === 2 && (
+                            <div className="animate-in fade-in space-y-4">
+                                <div>
+                                    <h3 className="font-bold text-lg mb-4 flex items-center gap-2"><i className="ph ph-file-text text-[#CA8A04] text-[18px]"></i> อธิบายไอเดียของคุณ</h3>
+                                    <textarea placeholder="คุณอยากทำอะไร เพื่อปรับปรุงโรงเรียน..." value={formData.details} onChange={(e) => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 focus:outline-none focus:border-[#CA8A04] text-sm md:text-base min-h-[150px]"></textarea>
+                                </div>
+                                <div className="p-3 bg-[#F9FAFB] rounded-xl border border-[#E5E7EB] flex items-center gap-3">
+                                    <input type="checkbox" id="anonIdea" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-[#CA8A04] rounded" />
+                                    <label htmlFor="anonIdea" className="text-sm cursor-pointer">ส่งแบบไม่เปิดเผยตัวตน</label>
+                                </div>
+                            </div>
+                        )}
+                        {step === 3 && (
+                            <div className="animate-in fade-in">
+                                <h3 className="font-bold text-lg mb-4">ตรวจสอบข้อมูล</h3>
+                                <div className="space-y-4 bg-[#F7F8FA] p-4 rounded-xl text-sm border border-[#E5E7EB]">
+                                    <div><span className="text-[#6B7280] block mb-1">หมวดหมู่ไอเดีย</span><span className="font-semibold text-[#CA8A04]">{formData.category || '-'}</span></div>
+                                    <div><span className="text-[#6B7280] block mb-1">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                        {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-[#4B5563] font-medium hover:bg-[#F3F4F6]">ย้อนกลับ</button>}
+                        {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={(step === 1 && !formData.category) || (step === 2 && !formData.details)} className="flex-1 bg-[#CA8A04] hover:bg-[#A16207] disabled:bg-[#FDE047] text-white font-bold py-3 rounded-xl flex justify-center gap-2">ถัดไป <i className="ph ph-arrow-right text-[18px]"></i></button> : <button onClick={handleSubmit} disabled={isLoading} className="flex-1 bg-[#CA8A04] hover:bg-[#A16207] text-white font-bold py-3 rounded-xl shadow-md">ยืนยันเสนอไอเดีย</button>}
+                    </div>
+                </div>
+            );
+        };
+
+        const TrackingView = ({ tickets }) => {
+            const [searchId, setSearchId] = useState('');
+            const [result, setResult] = useState(null);
+            const [hasSearched, setHasSearched] = useState(false);
+
+            const handleSearch = () => {
+                setHasSearched(true);
+                const found = tickets.find(t => t.id === searchId);
+                setResult(found || null);
+            };
+
+            return (
+                <div className="max-w-2xl mx-auto px-4 py-6 pb-28 md:pb-8">
+                    <h2 className="text-xl md:text-2xl font-bold text-[#1F2937] mb-6 flex items-center gap-2">
+                        <i className="ph ph-magnifying-glass text-[#C8102E] text-[24px]"></i> ติดตามสถานะ
+                    </h2>
+                    <div className="bg-white rounded-3xl p-5 border border-[#E5E7EB] shadow-sm mb-6">
+                        <label className="block font-medium text-[#1F2937] mb-2 text-sm">กรอกหมายเลขติดตาม (Tracking ID)</label>
+                        <div className="flex gap-2">
+                            <input type="text" placeholder="เช่น KM-2026-0001" value={searchId} onChange={(e) => setSearchId(e.target.value.toUpperCase())} className="flex-1 bg-[#F7F8FA] border border-[#E5E7EB] rounded-xl p-3 uppercase font-mono text-sm md:text-base focus:outline-none focus:border-[#C8102E]" />
+                            <button onClick={handleSearch} className="bg-[#1F2937] hover:bg-black text-white px-5 rounded-xl font-medium transition-colors text-sm md:text-base">ค้นหา</button>
+                        </div>
+                    </div>
+                    {hasSearched && !result && (
+                        <div className="text-center py-10 bg-white rounded-3xl border border-[#E5E7EB] animate-in fade-in">
+                            <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center text-gray-400 mx-auto mb-3">
+                                <i className="ph ph-magnifying-glass text-[24px]"></i>
+                            </div>
+                            <h3 className="font-bold text-base md:text-lg text-[#1F2937]">ไม่พบข้อมูล</h3>
+                            <p className="text-sm text-[#6B7280]">โปรดตรวจสอบหมายเลขและลองใหม่อีกครั้ง</p>
+                        </div>
+                    )}
+                    {result && (
+                        <div className="bg-white rounded-3xl p-5 md:p-6 border border-[#E5E7EB] shadow-sm animate-in slide-in-from-bottom-4">
+                            <div className="flex justify-between items-start mb-4 border-b border-[#E5E7EB] pb-4">
+                                <div>
+                                    <span className="text-[11px] md:text-xs font-semibold px-2 py-1 bg-gray-100 text-gray-600 rounded-md mb-2 inline-block">
+                                        {result.category}
+                                    </span>
+                                    <h3 className="font-bold text-base md:text-lg text-[#1F2937]">{result.title}</h3>
+                                    <p className="text-xs md:text-sm text-[#6B7280] font-mono mt-1">ID: {result.id}</p>
+                                </div>
+                            </div>
+
+                            <div className="mb-6 space-y-2 text-xs md:text-sm">
+                                {result.location && result.location !== '-' && <p><span className="font-medium text-[#1F2937]">สถานที่:</span> <span className="text-[#6B7280]">{result.location}</span></p>}
+                                <p><span className="font-medium text-[#1F2937]">รายละเอียด:</span> <span className="text-[#6B7280]">{result.details || '-'}</span></p>
+                            </div>
+
+                            <div className="relative pl-6 space-y-6 before:absolute before:inset-y-0 before:left-2.5 before:w-0.5 before:bg-[#E5E7EB]">
+                                <div className="relative">
+                                    <div className="absolute -left-6 w-5 h-5 rounded-full bg-[#16A34A] border-4 border-white flex items-center justify-center"></div>
+                                    <h4 className="font-bold text-xs md:text-sm">ส่งเรื่องเรียบร้อย</h4>
+                                    <p className="text-[10px] md:text-xs text-[#6B7280]">{result.date}</p>
+                                </div>
+                                <div className="relative">
+                                    <div className={`absolute -left-6 w-5 h-5 rounded-full border-4 border-white flex items-center justify-center ${result.status === 'pending' ? 'bg-[#F59E0B] shadow-[0_0_0_2px_#F59E0B_inset] animate-pulse' : 'bg-[#16A34A]'}`}></div>
+                                    <h4 className={`font-bold text-xs md:text-sm ${result.status === 'pending' ? 'text-[#F59E0B]' : 'text-[#1F2937]'}`}>รับเรื่อง / กำลังตรวจสอบ</h4>
+                                </div>
+                                <div className="relative">
+                                    <div className={`absolute -left-6 w-5 h-5 rounded-full border-4 border-white flex items-center justify-center ${result.status === 'resolved' ? 'bg-[#16A34A]' : 'bg-[#E5E7EB]'}`}></div>
+                                    <h4 className={`font-bold text-xs md:text-sm ${result.status === 'resolved' ? 'text-[#16A34A]' : 'text-[#9CA3AF]'}`}>ดำเนินการเสร็จสิ้น</h4>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const AdminLogin = ({ setCurrentView, setIsAdminAuth }) => {
+            const [email, setEmail] = useState('');
+            const [password, setPassword] = useState('');
+            const [rememberMe, setRememberMe] = useState(false);
+
+            useEffect(() => {
+                // ดึงชื่อผู้ใช้ที่จำไว้จากเครื่อง (ถ้ามี)
+                const savedUser = localStorage.getItem('adminUsername');
+                if (savedUser) {
+                    setEmail(savedUser);
+                    setRememberMe(true);
+                }
+            }, []);
+
+            const handleLogin = (e) => {
+                e.preventDefault();
+                if (email && password) {
+                    if (rememberMe) {
+                        localStorage.setItem('adminUsername', email);
+                    } else {
+                        localStorage.removeItem('adminUsername');
+                    }
+                    setIsAdminAuth(true);
+                    setCurrentView('admin-dashboard');
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-[#F7F8FA] flex items-center justify-center p-4">
+                    <div className="w-full max-w-md bg-white rounded-3xl p-8 shadow-xl border border-[#E5E7EB] animate-in zoom-in-95">
+                        <div className="w-16 h-16 bg-[#C8102E] rounded-2xl mx-auto flex items-center justify-center text-white text-2xl font-bold shadow-lg mb-6">KM</div>
+                        <h2 className="text-2xl font-bold text-center text-[#1F2937] mb-2">เข้าสู่ระบบผู้ดูแล</h2>
+                        <p className="text-center text-[#6B7280] mb-8 text-sm">พิมพ์อะไรก็ได้เพื่อทดสอบ (เช่น admin / 1234)</p>
+                        <form onSubmit={handleLogin} className="space-y-4">
+                            <input type="text" required placeholder="ชื่อผู้ใช้" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-[#C8102E] transition-all" />
+                            <input type="password" required placeholder="รหัสผ่าน" value={password} onChange={(e) => setPassword(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-[#C8102E] transition-all" />
+                            
+                            <div className="flex items-center gap-2 mt-2">
+                                <input type="checkbox" id="rememberMe" checked={rememberMe} onChange={(e) => setRememberMe(e.target.checked)} className="w-4 h-4 accent-[#C8102E] rounded cursor-pointer" />
+                                <label htmlFor="rememberMe" className="text-sm text-[#4B5563] cursor-pointer">จำชื่อผู้ใช้งาน</label>
+                            </div>
+
+                            <button type="submit" className="w-full bg-[#1F2937] hover:bg-black text-white font-bold py-3.5 rounded-xl transition-colors shadow-md mt-4">เข้าสู่ระบบ</button>
+                            <button type="button" onClick={() => setCurrentView('home')} className="w-full text-sm text-[#6B7280] hover:text-[#C8102E] py-2 mt-2">กลับหน้าหลัก</button>
+                        </form>
+                    </div>
+                </div>
+            );
+        };
+
+        const StatCard = ({ title, value, icon, color, bg }) => (
+            <div className="bg-white p-4 md:p-5 rounded-2xl border border-[#E5E7EB] shadow-sm flex items-center gap-3 md:gap-4">
+                <div className={`w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${bg} ${color}`}>
+                    <i className={`ph ${icon} text-[20px] md:text-[24px]`}></i>
+                </div>
+                <div>
+                    <p className="text-xs md:text-sm text-[#6B7280] font-medium">{title}</p>
+                    <p className="text-xl md:text-2xl font-bold text-[#1F2937]">{value}</p>
+                </div>
+            </div>
+        );
+
+        const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets }) => {
+            return (
+                <div className="flex h-screen bg-[#F3F4F6] overflow-hidden w-full">
+                    <div className="w-64 bg-white border-r border-[#E5E7EB] flex flex-col shadow-sm hidden md:flex">
+                        <div className="p-4 border-b border-[#E5E7EB] flex items-center gap-3">
+                            <div className="w-8 h-8 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold text-xs">KM</div>
+                            <span className="font-bold text-[#1F2937]">Admin Panel</span>
+                        </div>
+                        <div className="p-4 space-y-1 flex-1">
+                            <button className="w-full flex items-center gap-3 p-3 rounded-xl text-sm bg-[#FFF5F6] text-[#C8102E] font-bold"><i className="ph ph-squares-four text-[20px]"></i> แดชบอร์ด</button>
+                        </div>
+                        <div className="p-4 border-t border-[#E5E7EB]">
+                            <button onClick={() => { setIsAdminAuth(false); setCurrentView('home'); }} className="flex items-center gap-2 text-[#6B7280] hover:text-[#DC2626] w-full p-2 rounded-lg transition-colors"><i className="ph ph-sign-out text-[18px]"></i> ออกจากระบบ</button>
+                        </div>
+                    </div>
+
+                    <div className="flex-1 flex flex-col h-screen overflow-y-auto w-full">
+                        <div className="bg-white px-6 py-4 border-b border-[#E5E7EB] flex justify-between items-center sticky top-0 z-10 shadow-sm">
+                            <h2 className="text-xl font-bold text-[#1F2937]">ภาพรวมระบบ</h2>
+                            <div className="flex items-center gap-4">
+                                <div className="flex items-center gap-2"><div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"><i className="ph ph-user text-[16px] text-gray-500"></i></div><span className="text-sm font-medium hidden sm:block">Super Admin</span></div>
+                            </div>
+                        </div>
+
+                        <div className="p-4 md:p-6 space-y-6">
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                                <StatCard title="เรื่องทั้งหมด" value={tickets.length.toString()} icon="ph-clipboard-text" color="text-[#C8102E]" bg="bg-red-50" />
+                                <StatCard title="รอดำเนินการ" value={tickets.filter(t => t.status === 'pending').length.toString()} icon="ph-clock" color="text-[#F59E0B]" bg="bg-yellow-50" />
+                                <StatCard title="แก้ไขแล้ว" value={tickets.filter(t => t.status === 'resolved').length.toString()} icon="ph-check-circle" color="text-[#16A34A]" bg="bg-green-50" />
+                            </div>
+
+                            <div className="bg-white border border-[#E5E7EB] rounded-2xl shadow-sm overflow-hidden w-full">
+                                <div className="p-5 border-b border-[#E5E7EB] flex justify-between items-center bg-[#F9FAFB]">
+                                    <h3 className="font-bold text-[#1F2937]">รายการล่าสุด</h3>
+                                </div>
+                                <div className="overflow-x-auto">
+                                    <table className="w-full text-sm text-left whitespace-nowrap">
+                                        <thead className="bg-gray-50 text-gray-500 border-b">
+                                            <tr><th className="px-4 py-3 font-medium">Tracking ID</th><th className="px-4 py-3 font-medium">หมวดหมู่</th><th className="px-4 py-3 font-medium">หัวข้อ</th><th className="px-4 py-3 font-medium">สถานะ</th></tr>
+                                        </thead>
+                                        <tbody>
+                                            {tickets.map((t) => (
+                                                <tr key={t.id} className="border-b hover:bg-gray-50 transition-colors">
+                                                    <td className="px-4 py-3 font-mono text-gray-600">{t.id}</td>
+                                                    <td className="px-4 py-3"><span className="px-2 py-1 rounded text-xs bg-gray-100 text-gray-600">{t.category}</span></td>
+                                                    <td className="px-4 py-3 font-medium text-[#1F2937] max-w-[200px] truncate">{t.title}</td>
+                                                    <td className="px-4 py-3 text-amber-600 font-medium">{t.status === 'pending' ? 'รอดำเนินการ' : t.status === 'investigating' ? 'กำลังตรวจสอบ' : 'แก้ไขแล้ว'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Component ป๊อปอัพหน้าแรก
+        const PosterPopup = () => {
+            const [isVisible, setIsVisible] = useState(false);
+            const [hideFor7Days, setHideFor7Days] = useState(false);
+
+            // ข้อมูลสมมติที่ดึงมาจาก Admin Settings
+            const popupSettings = {
+                enabled: true, // สวิตช์จากฝั่งแอดมินว่าเปิดให้โชว์ไหม
+                imageUrl: "https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80", // ลิงก์รูปตัวอย่าง
+                linkUrl: "#", // ลิงก์ตอนกดรูป
+                popupId: "promo_term2" // ID แคมเปญ ถ้าแอดมินเปลี่ยนรูปใหม่ ต้องเปลี่ยน ID นี้ด้วยให้มันโชว์ใหม่
+            };
+
+            useEffect(() => {
+                if (popupSettings.enabled) {
+                    const hiddenUntil = localStorage.getItem(`hidePopup_${popupSettings.popupId}`);
+                    const now = new Date().getTime();
+                    // ถ้ายังไม่มีข้อมูล หรือเลย 7 วันไปแล้ว ให้แสดง
+                    if (!hiddenUntil || now > parseInt(hiddenUntil)) {
+                        setIsVisible(true);
+                    }
+                }
+            }, []);
+
+            const handleClose = () => {
+                if (hideFor7Days) {
+                    // คำนวณเวลา 7 วันข้างหน้า (มิลลิวินาที)
+                    const sevenDaysLater = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
+                    localStorage.setItem(`hidePopup_${popupSettings.popupId}`, sevenDaysLater.toString());
+                }
+                setIsVisible(false);
+            };
+
+            if (!isVisible) return null;
+
+            return (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+                    <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-in zoom-in-95">
+                        <div className="relative">
+                            {/* ปุ่มปิด */}
+                            <button onClick={handleClose} className="absolute top-2 right-2 z-10 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center transition-colors">
+                                <i className="ph ph-x"></i>
+                            </button>
+                            {/* รูปภาพ (ไม่ล็อค 16:9 จำกัดแค่ความสูงไม่ให้ล้น) */}
+                            <a href={popupSettings.linkUrl} target="_blank" rel="noreferrer">
+                                <img src={popupSettings.imageUrl} alt="ประกาศ" className="w-full h-auto max-h-[60vh] object-cover" />
+                            </a>
+                        </div>
+                        <div className="p-4 bg-white border-t border-[#E5E7EB]">
+                            <div className="flex items-center gap-2">
+                                <input type="checkbox" id="hide7days" checked={hideFor7Days} onChange={(e) => setHideFor7Days(e.target.checked)} className="w-5 h-5 accent-[#C8102E] rounded cursor-pointer" />
+                                <label htmlFor="hide7days" className="text-sm text-[#4B5563] cursor-pointer font-medium">ไม่แสดงประกาศนี้อีกเป็นเวลา 7 วัน</label>
+                            </div>
+                            <button onClick={handleClose} className="w-full mt-4 bg-[#F7F8FA] border border-[#E5E7EB] hover:bg-gray-100 text-[#1F2937] font-bold py-2.5 rounded-xl transition-colors">
+                                ปิดหน้าต่าง
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // ==========================================
+        // MAIN APP RENDER
+        // ==========================================
+        function App() {
+            const [currentView, setCurrentView] = useState('home');
+            const [isAdminAuth, setIsAdminAuth] = useState(false);
+            const [tickets, setTickets] = useState([]);
+
+            const navigateTo = (view) => {
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                setCurrentView(view);
+            };
+
+            const submitTicketData = async (data) => {
+                // ... logic ส่งข้อมูลที่เขียนไว้ด้านบน ...
+                const generateTrackingId = () => `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
+                const newId = generateTrackingId();
+                const payload = { ...data, id: newId };
+
+                const newTicket = { id: newId, status: 'pending', date: new Date().toISOString().split('T')[0], title: data.details ? data.details.substring(0, 30) + '...' : data.category, ...data };
+                setTickets(prev => [newTicket, ...prev]);
+
+                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
+                    try {
+                        await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+                    } catch (error) { console.error("Fetch Error:", error); }
+                }
+                return newId;
+            };
+
+            if (currentView === 'admin-login') return <AdminLogin setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} />;
+            if (currentView === 'admin-dashboard' && isAdminAuth) return <AdminDashboard setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} tickets={tickets} />;
+
+            return (
+                <div className="min-h-screen flex justify-center bg-gray-100 relative">
+                    {/* ป๊อปอัพหน้าแรก */}
+                    {currentView === 'home' && <PosterPopup />}
+
                     <div className="w-full max-w-md bg-[#F7F8FA] min-h-screen flex flex-col shadow-xl relative">
-                        <Header />
+                        <Header navigateTo={navigateTo} onAdminTrigger={() => setCurrentView('admin-login')} />
                         <main className="flex-1 overflow-y-auto">
-                            {currentView === 'home' && <HomeView />}
-                            {currentView === 'feeling' && <FeelingView />}
-                            {currentView === 'feedback' && <FeedbackView />}
-                            {currentView === 'issue' && <IssueReportView />}
-                            {currentView === 'safety' && <SafetyReportView />}
-                            {currentView === 'help' && <HelpView />}
-                            {currentView === 'idea' && <IdeaView />}
-                            {currentView === 'tracking' && <TrackingView />}
+                            {currentView === 'home' && <HomeView navigateTo={navigateTo} />}
+                            {currentView === 'feeling' && <FeelingView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                            {currentView === 'feedback' && <FeedbackView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                            {currentView === 'issue' && <IssueReportView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                            {currentView === 'safety' && <SafetyReportView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                            {currentView === 'help' && <HelpView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                            {currentView === 'idea' && <IdeaView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                            {currentView === 'tracking' && <TrackingView tickets={tickets} />}
                         </main>
-                        <BottomNav />
+                        <BottomNav currentView={currentView} navigateTo={navigateTo} />
                     </div>
                 </div>
             );
