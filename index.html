@@ -4,42 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     
-    <!-- ตั้งค่าชื่อเว็บหลัก -->
-    <title>Student Voice - Khammuang School</title>
-    <meta name="title" content="Student Voice - Khammuang School">
+    <title>Student Voice</title>
+    <meta name="title" content="Student Voice">
     <meta name="description" content="พื้นที่ปลอดภัยสำหรับบอกความรู้สึก แสดงความคิดเห็น แจ้งปัญหา หรือขอความช่วยเหลือ">
     
-    <!-- ตั้งค่าพรีวิวเวลาแชร์ลิงก์ (Line, Facebook, iMessage ฯลฯ) -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="https://studentcouncilkm69-cloud.github.io/studentvoice/">
-    <meta property="og:title" content="Student Voice - Khammuang School">
+    <meta property="og:title" content="Student Voice">
     <meta property="og:description" content="พื้นที่ปลอดภัยสำหรับบอกความรู้สึก แสดงความคิดเห็น แจ้งปัญหา หรือขอความช่วยเหลือ">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=800"> <!-- รูปเวลาแชร์ลิงก์ -->
+    <meta property="og:image" content="https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=800">
 
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
-
-    <!-- React & ReactDOM -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <!-- Babel for JSX -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
-        
-        body {
-            font-family: 'Noto Sans Thai', sans-serif;
-            background-color: #E5E7EB; 
-            color: #1F2937;
-            -webkit-font-smoothing: antialiased;
-            margin: 0;
-            padding: 0;
-        }
+        body { font-family: 'Noto Sans Thai', sans-serif; background-color: #E5E7EB; color: #1F2937; -webkit-font-smoothing: antialiased; margin: 0; padding: 0; }
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .modal-overlay { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
@@ -51,7 +33,7 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const GOOGLE_SCRIPT_URL = ""; 
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/library/d/1CJ8w7_iErTb2lE7q5Aj6qbulbSTY12DwbPlJAUiPvxtFNrbIk8Pl9gPZ/1"; 
 
         const FEELING_EMOJIS_DATA = [
             { emoji: '😀', label: 'ดีมาก', value: 'excellent' },
@@ -62,8 +44,7 @@
         ];
         
         const FEELING_FACTORS_DATA = [
-            'เพื่อน', 'การเรียน', 'ครู', 'กิจกรรม', 'ครอบครัว', 'สถานที่', 
-            'อาหาร', 'ความปลอดภัย', 'งาน / การบ้าน', 'การเดินทาง', 'เรื่องส่วนตัว', 'อื่น ๆ'
+            'เพื่อน', 'การเรียน', 'ครู', 'กิจกรรม', 'ครอบครัว', 'สถานที่', 'อาหาร', 'ความปลอดภัย', 'งาน / การบ้าน', 'การเดินทาง', 'เรื่องส่วนตัว', 'อื่น ๆ'
         ];
 
         // ==========================================
@@ -91,7 +72,7 @@
                         )}
                         <div className="flex flex-col justify-center">
                             <h1 className="font-bold text-[#1F2937] text-[15px] md:text-lg leading-tight mb-0.5">ระบบรับฟังเสียงนักเรียน</h1>
-                            <p className="text-[10px] md:text-xs text-[#6B7280] font-medium leading-none tracking-wide">{settings.schoolName || 'STUDENT COUNCIL'}</p>
+                            <p className="text-[10px] md:text-xs text-[#6B7280] font-medium leading-none tracking-wide">{settings.schoolName || 'STUDENT COUNCIL • KHAMMUANG SCHOOL'}</p>
                         </div>
                     </div>
                     <button onClick={() => navigateTo('tracking')} className="text-[#6B7280] hover:text-[#C8102E] transition-colors p-2 rounded-full hover:bg-[#FDECEF]">
@@ -112,13 +93,11 @@
                 );
             };
             return (
-                // เอา md:hidden ออกแล้ว เพื่อให้แสดงทุกขนาดหน้าจอ
                 <div className="bg-white border-t border-[#E5E7EB] z-40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] pb-safe">
                     <div className="flex justify-around items-center p-1.5">
                         <NavButton icon="ph-house" label="หน้าหลัก" view="home" />
                         <NavButton icon="ph-chat-circle" label="ความรู้สึก" view="feeling" />
                         <NavButton icon="ph-clipboard-text" label="แจ้งปัญหา" view="issue" />
-                        {/* เปลี่ยนคำว่า "ความปลอดภัย" เป็น "แจ้งเหตุ" เพื่อให้คำสั้นลงเท่ากับอันอื่น */}
                         <NavButton icon="ph-shield-warning" label="แจ้งเหตุ" view="safety" />
                     </div>
                 </div>
@@ -141,10 +120,17 @@
                 <div className="flex flex-col items-center justify-center min-h-[70vh] px-4 text-center animate-in zoom-in-95">
                     <div className="w-20 h-20 bg-[#16A34A] rounded-full flex items-center justify-center text-white mx-auto mb-6 shadow-lg shadow-green-100"><i className="ph ph-check-circle text-[40px] ph-fill"></i></div>
                     <h2 className="text-2xl font-bold text-[#1F2937] mb-2">{message}</h2>
-                    <p className="text-[#6B7280] mb-8">ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการพัฒนาโรงเรียนของเรา</p>
+                    <p className="text-[#6B7280] mb-8 text-sm">ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการพัฒนาโรงเรียนของเรา</p>
                     
                     {id && (
                         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 mb-8 shadow-sm w-full max-w-sm">
+                            <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-3 mb-5">
+                                <p className="font-bold text-[#DC2626] text-sm flex items-center justify-center gap-1.5">
+                                    <i className="ph ph-warning-circle text-lg"></i> กรุณาคัดลอกหรือแคปหน้าจอไว้!
+                                </p>
+                                <p className="text-[#991B1B] text-xs mt-1">เพื่อนำหมายเลขนี้มาใช้ติดตามสถานะ</p>
+                            </div>
+
                             <p className="text-sm text-[#6B7280] mb-2 font-medium">หมายเลขติดตามของคุณคือ</p>
                             <div className="flex flex-col gap-3">
                                 <div className="flex items-center justify-center bg-[#F7F8FA] py-4 rounded-xl border-2 border-dashed border-[#C8102E]"><span className="text-2xl font-bold text-[#C8102E] tracking-widest font-mono">{id}</span></div>
@@ -180,10 +166,13 @@
             <div className="p-4 py-6 pb-12 animate-in fade-in duration-300">
                 <div className="bg-gradient-to-br from-[#E11D48] via-[#BE123C] to-[#881337] rounded-3xl p-6 text-white shadow-[0_8px_30px_rgb(200,16,46,0.3)] mb-8 relative overflow-hidden">
                     <div className="absolute -right-6 top-0 text-white/10 rotate-12 transform scale-110 pointer-events-none"><i className="ph ph-chat-teardrop-text text-[140px]"></i></div>
+                    <div className="absolute right-20 -bottom-10 text-white/10 -rotate-12 transform scale-125 pointer-events-none"><i className="ph ph-lightbulb text-[120px]"></i></div>
                     <div className="absolute left-16 -top-12 text-white/5 rotate-45 transform scale-110 pointer-events-none"><i className="ph ph-handshake text-[150px]"></i></div>
+                    <div className="absolute -left-10 bottom-2 text-white/5 -rotate-12 transform scale-90 pointer-events-none"><i className="ph ph-sparkle text-[100px]"></i></div>
+
                     <div className="relative z-10">
                         <h2 className="text-2xl font-bold mb-2.5">ยินดีต้อนรับสู่พื้นที่ของคุณ</h2>
-                        <p className="text-[#FFE4E6] text-sm md:text-base max-w-md leading-relaxed opacity-95">ทุกเสียงของนักเรียนมีความหมาย ที่นี่คือพื้นที่ปลอดภัยสำหรับบอกความรู้สึก แสดงความคิดเห็น แจ้งปัญหา ขอความช่วยเหลือ</p>
+                        <p className="text-[#FFE4E6] text-sm md:text-base max-w-md leading-relaxed opacity-95">ทุกเสียงของนักเรียนมีความหมาย ที่นี่คือพื้นที่ปลอดภัยสำหรับบอกความรู้สึก แสดงความคิดเห็น แจ้งปัญหา ขอความช่วยเหลือ และเสนอไอเดียใหม่ๆ</p>
                     </div>
                 </div>
 
@@ -195,6 +184,23 @@
                     <button onClick={() => navigateTo('safety')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-red-50 text-[#C8102E] border-red-100"><i className="ph ph-shield-warning text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">เหตุความปลอดภัย</h4><p className="text-[11px] text-[#6B7280]">อุบัติเหตุ, ทะเลาะ, บูลลี่</p></button>
                     <button onClick={() => navigateTo('counseling')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-green-50 text-green-600 border-green-100"><i className="ph ph-hand-heart text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">ปรึกษาปัญหาใจ</h4><p className="text-[11px] text-[#6B7280]">เครียด, การเรียน, ครอบครัว</p></button>
                     <button onClick={() => navigateTo('idea')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-yellow-50 text-yellow-600 border-yellow-100"><i className="ph ph-lightbulb text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">เสนอไอเดีย</h4><p className="text-[11px] text-[#6B7280]">กิจกรรมใหม่ๆ, สิ่งที่อยากให้มี</p></button>
+                </div>
+
+                <div className="mt-8 mb-4">
+                    <div className="bg-white rounded-[24px] p-6 border border-[#E5E7EB] shadow-sm text-center">
+                        <div className="flex items-center justify-center gap-2 mb-3 text-[#10B981]">
+                            <i className="ph ph-lock-key text-2xl font-bold"></i>
+                            <h3 className="font-bold text-[#1F2937] text-base">รับประกันความเป็นส่วนตัวระดับสูงสุด</h3>
+                        </div>
+                        <p className="text-[13px] text-[#6B7280] leading-relaxed mb-5">
+                            ข้อมูลของคุณได้รับการเข้ารหัสและไม่มีการบันทึก IP Address ตามมาตรฐานสากล สอดคล้องกับพ.ร.บ.คุ้มครองข้อมูลส่วนบุคคล (PDPA)
+                        </p>
+                        <div className="border-t border-[#E5E7EB] pt-4 flex items-center justify-center gap-2 text-[#4B5563] font-bold text-sm">
+                            <i className="ph ph-buildings text-xl"></i>
+                            สภานักเรียน โรงเรียนคำม่วง
+                        </div>
+                    </div>
+                    {/* เอาข้อความ "โรงเรียนคำม่วง ❤️" ออกไปแล้ว */}
                 </div>
             </div>
         );
@@ -266,9 +272,7 @@
                         <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center text-purple-600"><i className="ph ph-chat-teardrop-text text-[22px] ph-fill"></i></div>
                         <h2 className="text-xl font-bold">แสดงความคิดเห็น</h2>
                     </div>
-                    
                     <ProgressSteps total={4} current={step} color={color} />
-
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
                         {step === 1 && (
                             <div className="animate-in fade-in">
@@ -320,7 +324,7 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', location: '', details: '', isAnonymous: true, images: [] });
             const [trackingId, setTrackingId] = useState(null);
-            const color = "#EA580C"; // orange-600
+            const color = "#EA580C"; 
             const categories = ['ห้องน้ำ', 'โรงอาหาร', 'ไฟฟ้า/น้ำ', 'อาคารเรียน', 'อุปกรณ์ชำรุด', 'ความสะอาด', 'อื่นๆ'];
 
             const handleImageUpload = (e) => {
@@ -343,9 +347,7 @@
                         <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center text-orange-600"><i className="ph ph-clipboard-text text-[22px] ph-fill"></i></div>
                         <h2 className="text-xl font-bold">แจ้งซ่อม/ปัญหา</h2>
                     </div>
-                    
                     <ProgressSteps total={4} current={step} color={color} />
-
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
                         {step === 1 && (
                             <div className="animate-in fade-in">
@@ -367,7 +369,10 @@
                                 <textarea placeholder="อธิบายปัญหาที่พบ..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[100px] focus:outline-none focus:border-orange-600"></textarea>
                                 
                                 <label className="block font-bold text-sm">แนบรูปภาพ (สูงสุด 3 รูป)</label>
-                                <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-orange-50 file:text-orange-700 hover:file:bg-orange-100" />
+                                <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                                    <i className="ph ph-image text-3xl text-gray-400 mb-2"></i><span className="text-sm font-medium text-gray-500">คลิกเพื่ออัปโหลดรูปภาพ</span>
+                                    <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
+                                </label>
                                 <div className="flex gap-2 mt-2">
                                     {formData.images.map((img, i) => (
                                         <div key={i} className="relative w-16 h-16"><img src={img} className="w-full h-full object-cover rounded-lg border" /><button onClick={()=>setFormData(p=>({...p, images: p.images.filter((_,idx)=>idx!==i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"><i className="ph ph-x text-xs"></i></button></div>
@@ -422,9 +427,7 @@
                         <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center text-red-600"><i className="ph ph-shield-warning text-[22px] ph-fill"></i></div>
                         <h2 className="text-xl font-bold">แจ้งเหตุความปลอดภัย</h2>
                     </div>
-                    
                     <ProgressSteps total={4} current={step} color={color} />
-
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
                         {step === 1 && (
                             <div className="animate-in fade-in">
@@ -476,7 +479,7 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', details: '', contactInfo: '', contactBack: false, isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
-            const color = "#16A34A"; // green-600
+            const color = "#16A34A"; 
 
             const categories = ['ความเครียด/ซึมเศร้า', 'ปัญหาครอบครัว', 'ปัญหาความสัมพันธ์/เพื่อน', 'เรื่องการเรียน', 'ต้องการคนรับฟัง', 'อื่นๆ'];
 
@@ -494,9 +497,7 @@
                         <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600"><i className="ph ph-hand-heart text-[22px] ph-fill"></i></div>
                         <h2 className="text-xl font-bold">ปรึกษาปัญหาใจ</h2>
                     </div>
-                    
                     <ProgressSteps total={3} current={step} color={color} />
-
                     <div className="bg-white rounded-3xl p-5 border shadow-sm min-h-[300px]">
                         {step === 1 && (
                             <div className="animate-in fade-in">
@@ -654,9 +655,10 @@
             );
         };
 
-        const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets, updateTicketStatus }) => {
+        const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets, updateTicketStatus, settings }) => {
             const [adminTab, setAdminTab] = useState('overview'); 
             const [selectedTicket, setSelectedTicket] = useState(null);
+            const [timeFilter, setTimeFilter] = useState('7days'); 
 
             const handleLogout = () => { setIsAdminAuth(false); setCurrentView('home'); };
 
@@ -695,62 +697,181 @@
             };
 
             return (
-                <div className="flex flex-col h-full bg-[#F3F4F6] w-full absolute inset-0 z-50">
-                    <div className="bg-white px-4 py-3 border-b flex justify-between items-center shadow-sm z-10 sticky top-0">
-                        <div className="flex items-center gap-3"><div className="w-9 h-9 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div><div><h1 className="font-bold leading-tight">Admin</h1><p className="text-[10px] text-gray-500">จัดการระบบ</p></div></div>
-                        <button onClick={handleLogout} className="text-sm bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1"><i className="ph ph-sign-out"></i> ออก</button>
-                    </div>
-                    
-                    <div className="bg-white border-b px-2 flex overflow-x-auto hide-scrollbar z-10 sticky top-[60px]">
-                        <button onClick={() => setAdminTab('overview')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'overview' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-squares-four text-lg"></i> แดชบอร์ด</button>
-                        <button onClick={() => setAdminTab('tickets')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'tickets' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-list-dashes text-lg"></i> จัดการเรื่องแจ้ง ({tickets.length})</button>
-                        <button onClick={() => setAdminTab('settings')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'settings' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-gear text-lg"></i> ตั้งค่าระบบ</button>
+                <div className="flex h-screen bg-[#F3F4F6] w-full absolute inset-0 z-50">
+                    <div className="w-64 bg-white border-r hidden md:flex flex-col shadow-sm">
+                        <div className="p-4 border-b flex items-center gap-3">
+                            <div className="w-8 h-8 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div>
+                            <span className="font-bold">Admin Panel</span>
+                        </div>
+                        <div className="flex-1 p-4 space-y-2">
+                            <button onClick={() => setAdminTab('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${adminTab === 'overview' ? 'bg-[#FFF5F6] text-[#C8102E]' : 'text-gray-600 hover:bg-gray-50'}`}><i className="ph ph-squares-four text-lg"></i> แดชบอร์ด</button>
+                            <button onClick={() => setAdminTab('tickets')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${adminTab === 'tickets' ? 'bg-[#FFF5F6] text-[#C8102E]' : 'text-gray-600 hover:bg-gray-50'}`}><i className="ph ph-list-dashes text-lg"></i> แจ้งเรื่อง ({tickets.length})</button>
+                            <button onClick={() => setAdminTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${adminTab === 'settings' ? 'bg-[#FFF5F6] text-[#C8102E]' : 'text-gray-600 hover:bg-gray-50'}`}><i className="ph ph-gear text-lg"></i> ตั้งค่า</button>
+                        </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-4 pb-12">
-                        {adminTab === 'overview' && (
-                            <div className="space-y-4 animate-in fade-in">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div className="bg-white p-4 rounded-xl border"><p className="text-xs text-gray-500 mb-1">เรื่องทั้งหมด</p><p className="font-bold text-2xl text-gray-800">{tickets.length}</p></div>
-                                    <div className="bg-white p-4 rounded-xl border"><p className="text-xs text-gray-500 mb-1">รอดำเนินการ</p><p className="font-bold text-2xl text-amber-500">{tickets.filter(t=>t.status==='pending').length}</p></div>
-                                    <div className="bg-white p-4 rounded-xl border col-span-2 flex items-center justify-between"><div className="flex items-center gap-3"><div className="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center"><i className="ph ph-check-circle text-xl"></i></div><div><p className="text-xs text-gray-500">แก้ไขเสร็จสิ้นแล้ว</p><p className="font-bold text-xl">{tickets.filter(t=>t.status==='resolved').length} เรื่อง</p></div></div></div>
-                                </div>
+                    <div className="flex-1 flex flex-col h-full overflow-hidden">
+                        <div className="bg-white px-4 py-3 border-b flex justify-between items-center shadow-sm z-10 sticky top-0">
+                            <div className="flex items-center gap-3 md:hidden"><div className="w-9 h-9 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div><div><h1 className="font-bold leading-tight">Admin</h1></div></div>
+                            <div className="hidden md:block font-bold text-lg text-gray-800">
+                                {adminTab === 'overview' ? 'ภาพรวมระบบ' : adminTab === 'tickets' ? 'จัดการเรื่องแจ้ง' : 'ตั้งค่าระบบ'}
                             </div>
-                        )}
-                        {adminTab === 'tickets' && (
-                            <div className="space-y-3 animate-in fade-in">
-                                {tickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการ</p> : tickets.map(t => (
-                                    <div key={t.id} onClick={() => setSelectedTicket(t)} className="bg-white p-4 rounded-xl border shadow-sm cursor-pointer active:scale-[0.98] transition-transform">
-                                        <div className="flex justify-between mb-2">
-                                            <span className="font-mono text-xs text-gray-500">{t.id}</span>
-                                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${t.status === 'resolved' ? 'bg-green-100 text-green-700' : t.status === 'investigating' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{t.status === 'resolved' ? 'เสร็จสิ้น' : t.status === 'investigating' ? 'กำลังตรวจสอบ' : 'รอดำเนินการ'}</span>
+                            <div className="flex items-center gap-4">
+                                <div className="hidden md:flex items-center gap-2"><div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"><i className="ph ph-user text-gray-500"></i></div><span className="text-sm font-medium text-gray-700">Super Admin</span></div>
+                                <button onClick={handleLogout} className="text-sm bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1"><i className="ph ph-sign-out"></i> ออก</button>
+                            </div>
+                        </div>
+                        
+                        <div className="bg-white border-b px-2 flex overflow-x-auto hide-scrollbar z-10 md:hidden">
+                            <button onClick={() => setAdminTab('overview')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'overview' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-squares-four text-lg"></i> แดชบอร์ด</button>
+                            <button onClick={() => setAdminTab('tickets')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'tickets' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-list-dashes text-lg"></i> แจ้งเรื่อง ({tickets.length})</button>
+                            <button onClick={() => setAdminTab('settings')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'settings' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-gear text-lg"></i> ตั้งค่า</button>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 md:p-6 pb-12">
+                            {adminTab === 'overview' && (
+                                <div className="space-y-6 animate-in fade-in max-w-4xl mx-auto">
+                                    <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
+                                        <button onClick={()=>setTimeFilter('today')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${timeFilter === 'today' ? 'bg-[#1F2937] text-white' : 'bg-white border text-gray-600'}`}>วันนี้</button>
+                                        <button onClick={()=>setTimeFilter('7days')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${timeFilter === '7days' ? 'bg-[#1F2937] text-white' : 'bg-white border text-gray-600'}`}>7 วันที่ผ่านมา</button>
+                                        <button onClick={()=>setTimeFilter('30days')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${timeFilter === '30days' ? 'bg-[#1F2937] text-white' : 'bg-white border text-gray-600'}`}>30 วันที่ผ่านมา</button>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                                        <div className="bg-white p-5 rounded-2xl border flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clipboard-text text-gray-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">เรื่องทั้งหมด</p></div><p className="font-bold text-3xl text-gray-800">{tickets.length}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ</p></div><p className="font-bold text-3xl text-amber-500">{tickets.filter(t=>t.status==='pending').length}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border col-span-2 md:col-span-1 flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-check-circle text-green-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">แก้ไขแล้ว</p></div><p className="font-bold text-3xl text-green-500">{tickets.filter(t=>t.status==='resolved').length}</p></div>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="bg-white border rounded-2xl p-5">
+                                            <h3 className="font-bold text-gray-800 mb-4">หมวดหมู่ที่แจ้งเข้ามา</h3>
+                                            <div className="space-y-4">
+                                                <div><div className="flex justify-between text-sm mb-1"><span>แจ้งซ่อม/ปัญหา</span><span className="font-bold">45%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-orange-500 h-2 rounded-full w-[45%]"></div></div></div>
+                                                <div><div className="flex justify-between text-sm mb-1"><span>เสนอไอเดีย</span><span className="font-bold">25%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-yellow-500 h-2 rounded-full w-[25%]"></div></div></div>
+                                                <div><div className="flex justify-between text-sm mb-1"><span>ปรึกษาปัญหาใจ</span><span className="font-bold">20%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-green-500 h-2 rounded-full w-[20%]"></div></div></div>
+                                                <div><div className="flex justify-between text-sm mb-1"><span>เหตุความปลอดภัย</span><span className="font-bold">10%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-red-500 h-2 rounded-full w-[10%]"></div></div></div>
+                                            </div>
                                         </div>
-                                        <h3 className="font-bold text-sm text-gray-800">{t.title}</h3>
-                                        <p className="text-xs text-gray-500 mt-1 line-clamp-1">{t.details}</p>
+                                        <div className="bg-white border rounded-2xl p-5">
+                                            <h3 className="font-bold text-gray-800 mb-4">ภาพรวมความรู้สึก</h3>
+                                            <div className="grid grid-cols-5 gap-2">
+                                                <div className="flex flex-col items-center p-2 bg-green-50 rounded-xl"><span className="text-3xl mb-1">😀</span><span className="font-bold text-green-700">12</span><span className="text-[10px] text-green-600">ดีมาก</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-blue-50 rounded-xl"><span className="text-3xl mb-1">🙂</span><span className="font-bold text-blue-700">8</span><span className="text-[10px] text-blue-600">ดี</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-gray-50 rounded-xl"><span className="text-3xl mb-1">😐</span><span className="font-bold text-gray-700">15</span><span className="text-[10px] text-gray-600">เฉยๆ</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-orange-50 rounded-xl"><span className="text-3xl mb-1">🙁</span><span className="font-bold text-orange-700">4</span><span className="text-[10px] text-orange-600">ไม่ค่อยดี</span></div>
+                                                <div className="flex flex-col items-center p-2 bg-red-50 rounded-xl"><span className="text-3xl mb-1">😢</span><span className="font-bold text-red-700">2</span><span className="text-[10px] text-red-600">แย่</span></div>
+                                            </div>
+                                        </div>
                                     </div>
-                                ))}
-                            </div>
-                        )}
-                        {adminTab === 'settings' && (
-                            <div className="space-y-4 animate-in fade-in">
-                                <div className="bg-white p-4 rounded-xl border">
-                                    <h3 className="font-bold text-gray-800 mb-3 border-b pb-2"><i className="ph ph-image text-[#C8102E]"></i> ป๊อปอัพหน้าแรก</h3>
-                                    <div className="space-y-3">
-                                        <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" className="w-4 h-4 accent-[#C8102E]" /> เปิดใช้งาน</label>
-                                        <input type="text" placeholder="URL รูปภาพป๊อปอัพ" className="w-full border p-2 rounded-lg text-sm bg-gray-50" />
+
+                                    <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mt-6">
+                                        <div className="p-4 border-b bg-gray-50"><h3 className="font-bold text-gray-800">รายการล่าสุด</h3></div>
+                                        {tickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm text-left">
+                                                    <thead className="bg-gray-50 text-gray-500 border-b">
+                                                        <tr><th className="px-4 py-3 font-medium">Tracking ID</th><th className="px-4 py-3 font-medium">หมวดหมู่</th><th className="px-4 py-3 font-medium">หัวข้อ</th><th className="px-4 py-3 font-medium">สถานะ</th></tr>
+                                                    </thead>
+                                                    <tbody className="divide-y">
+                                                        {tickets.slice(0,5).map(t => (
+                                                            <tr key={t.id} onClick={() => setSelectedTicket(t)} className="hover:bg-gray-50 cursor-pointer">
+                                                                <td className="px-4 py-3 font-mono text-gray-600">{t.id}</td>
+                                                                <td className="px-4 py-3"><span className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs">{t.category}</span></td>
+                                                                <td className="px-4 py-3 font-medium text-gray-800">{t.title}</td>
+                                                                <td className="px-4 py-3 text-amber-600 font-medium">{t.status === 'pending' ? 'รอดำเนินการ' : t.status === 'investigating' ? 'ตรวจสอบ' : 'เสร็จสิ้น'}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                <div className="bg-white p-4 rounded-xl border">
-                                    <h3 className="font-bold text-gray-800 mb-3 border-b pb-2"><i className="ph ph-lock-key text-amber-600"></i> เปลี่ยนรหัสผ่าน</h3>
-                                    <div className="space-y-3">
-                                        <input type="password" placeholder="รหัสผ่านใหม่" className="w-full border p-2 rounded-lg text-sm bg-gray-50" />
-                                        <button className="bg-amber-600 text-white px-4 py-2 rounded-lg text-sm font-bold">บันทึกรหัสผ่าน</button>
+                            )}
+                            {adminTab === 'tickets' && (
+                                <div className="space-y-3 animate-in fade-in max-w-4xl mx-auto">
+                                    {tickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการ</p> : tickets.map(t => (
+                                        <div key={t.id} onClick={() => setSelectedTicket(t)} className="bg-white p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md transition-shadow">
+                                            <div className="flex justify-between mb-2">
+                                                <span className="font-mono text-xs text-gray-500">{t.id}</span>
+                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${t.status === 'resolved' ? 'bg-green-100 text-green-700' : t.status === 'investigating' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{t.status === 'resolved' ? 'เสร็จสิ้น' : t.status === 'investigating' ? 'กำลังตรวจสอบ' : 'รอดำเนินการ'}</span>
+                                            </div>
+                                            <h3 className="font-bold text-sm text-gray-800">{t.title}</h3>
+                                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">{t.details}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            {adminTab === 'settings' && (
+                                <div className="space-y-4 animate-in fade-in max-w-4xl mx-auto">
+                                    <div className="bg-white p-5 rounded-2xl border">
+                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-school text-[#C8102E] text-lg"></i> ข้อมูลและหน้าตาแอป</h3>
+                                        <div className="space-y-4">
+                                            <div><label className="block text-sm text-gray-600 mb-1">ชื่อโรงเรียน</label><input type="text" placeholder="STUDENT COUNCIL..." defaultValue={settings.schoolName} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" /></div>
+                                            <div><label className="block text-sm text-gray-600 mb-1">ลิงก์โลโก้ (URL)</label><input type="text" placeholder="https://..." defaultValue={settings.logoUrl} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" /></div>
+                                            <button className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2">บันทึกข้อมูลโรงเรียน</button>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-5 rounded-2xl border">
+                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-image text-[#C8102E] text-lg"></i> ป๊อปอัพหน้าแรก</h3>
+                                        <div className="space-y-4">
+                                            <label className="flex items-center gap-2 text-sm font-medium"><input type="checkbox" className="w-5 h-5 accent-[#C8102E]" /> เปิดใช้งานป๊อปอัพ</label>
+                                            <input type="text" placeholder="URL รูปภาพป๊อปอัพ (เช่น https://...)" className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
+                                            <button className="bg-gray-900 text-white px-5 py-2.5 rounded-xl text-sm font-bold">บันทึกการตั้งค่าป๊อปอัพ</button>
+                                        </div>
+                                    </div>
+                                    <div className="bg-white p-5 rounded-2xl border">
+                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-lock-key text-amber-600 text-lg"></i> เปลี่ยนรหัสผ่านแอดมิน</h3>
+                                        <div className="space-y-4">
+                                            <input type="password" placeholder="รหัสผ่านปัจจุบัน" className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
+                                            <input type="password" placeholder="รหัสผ่านใหม่" className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
+                                            <button className="bg-amber-600 text-white px-5 py-2.5 rounded-xl text-sm font-bold">เปลี่ยนรหัสผ่าน</button>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        )}
+                            )}
+                        </div>
+                        {selectedTicket && <TicketDetailModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} onUpdateStatus={(id, s) => { updateTicketStatus(id, s); setSelectedTicket(null); }} />}
                     </div>
-                    {selectedTicket && <TicketDetailModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} onUpdateStatus={(id, s) => { updateTicketStatus(id, s); setSelectedTicket(null); }} />}
+                </div>
+            );
+        };
+
+        // ==========================================
+        // POPUP
+        // ==========================================
+        const PosterPopup = ({ settings }) => {
+            const [isVisible, setIsVisible] = useState(false);
+            const [hideFor7Days, setHideFor7Days] = useState(false);
+
+            useEffect(() => {
+                const isEnabled = true; 
+                if (isEnabled) {
+                    const hiddenUntil = sessionStorage.getItem('hidePopupRef'); 
+                    if (!hiddenUntil) setIsVisible(true);
+                }
+            }, []);
+
+            const handleClose = () => {
+                if (hideFor7Days) sessionStorage.setItem('hidePopupRef', 'true');
+                setIsVisible(false);
+            };
+
+            if (!isVisible) return null;
+
+            return (
+                <div className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="relative w-full max-w-sm flex flex-col items-center">
+                        <button onClick={handleClose} className="absolute -top-14 right-0 w-10 h-10 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-md"><i className="ph ph-x text-lg"></i></button>
+                        <a href="#" target="_blank" rel="noreferrer" className="w-full">
+                            <img src={settings.popupImageUrl || "https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=800"} alt="ประกาศ" className="w-full h-auto rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] object-contain max-h-[60vh] border border-white/10" />
+                        </a>
+                        <label className="mt-6 flex items-center gap-3 bg-black/50 border border-white/20 text-white px-5 py-2.5 rounded-full cursor-pointer hover:bg-black/70 transition-all backdrop-blur-md">
+                            <input type="checkbox" checked={hideFor7Days} onChange={(e) => setHideFor7Days(e.target.checked)} className="w-5 h-5 accent-gray-500 rounded bg-transparent border-white/40" />
+                            <span className="text-sm font-medium">ไม่แสดงหน้านี้อีกใน 7 วัน</span>
+                        </label>
+                    </div>
                 </div>
             );
         };
@@ -763,11 +884,14 @@
             const [isAdminAuth, setIsAdminAuth] = useState(false);
             const [tickets, setTickets] = useState([]);
             
+            // ตั้งค่า Default ใหม่ให้ตรงตามที่ต้องการ
             const settings = { schoolName: "STUDENT COUNCIL • KHAMMUANG SCHOOL", logoUrl: "" };
 
             useEffect(() => {
                 setTickets([
-                    { id: 'KM-2026-9901', type: 'issue', category: 'ห้องน้ำ', title: '[แจ้งปัญหา] ห้องน้ำ', details: 'ก๊อกน้ำอาคาร 3 น้ำไม่ไหลครับ', location: 'อาคาร 3', isAnonymous: true, status: 'pending', date: '11/08/2026' }
+                    { id: 'KM-2026-9901', type: 'issue', category: 'ห้องน้ำ', title: '[แจ้งปัญหา] ห้องน้ำ', details: 'ก๊อกน้ำอาคาร 3 น้ำไม่ไหลครับ', location: 'อาคาร 3', isAnonymous: true, status: 'pending', date: '11/08/2026' },
+                    { id: 'KM-2026-9902', type: 'counseling', category: 'เรื่องการเรียน', title: '[ปรึกษา] เรื่องการเรียน', details: 'อ่านหนังสือไม่ทันเลยค่ะ', location: '-', isAnonymous: true, status: 'investigating', date: '10/08/2026' },
+                    { id: 'KM-2026-9903', type: 'safety', category: 'ทะเลาะวิวาท', title: '[ความปลอดภัย] ทะเลาะวิวาท', details: 'มีเพื่อนทะเลาะกันหลังโรงอาหาร', location: 'โรงอาหาร', isAnonymous: false, status: 'resolved', date: '09/08/2026' }
                 ]);
             }, []);
 
@@ -777,6 +901,17 @@
                 const newId = `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
                 const newTicket = { id: newId, status: 'pending', date: new Date().toLocaleDateString('en-GB'), title: data.title || data.category, ...data };
                 setTickets(prev => [newTicket, ...prev]);
+
+                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
+                    try {
+                        const payload = { ...data, id: newId };
+                        fetch(GOOGLE_SCRIPT_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: JSON.stringify(payload)
+                        }).catch(e => console.error("Error sending to Sheet:", e));
+                    } catch (error) { console.error("Fetch Error:", error); }
+                }
                 return newId;
             };
 
@@ -788,12 +923,13 @@
             
             return (
                 <div className="min-h-screen flex justify-center bg-gray-200">
-                    <div className="w-full max-w-md bg-[#F7F8FA] h-screen flex flex-col shadow-2xl relative overflow-hidden border-x border-gray-300">
+                    <div className={`bg-[#F7F8FA] h-screen flex flex-col shadow-2xl relative overflow-hidden border-x border-gray-300 transition-all duration-300 ${isAdminAuth ? 'w-full' : 'w-full max-w-md'}`}>
                         
                         {isAdminAuth ? (
-                            <AdminDashboard setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} tickets={tickets} updateTicketStatus={updateTicketStatus} />
+                            <AdminDashboard setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} tickets={tickets} updateTicketStatus={updateTicketStatus} settings={settings} />
                         ) : (
                             <>
+                                <PosterPopup settings={settings} />
                                 <Header navigateTo={navigateTo} onAdminTrigger={() => setCurrentView('admin-login')} settings={settings} />
                                 
                                 <main className="flex-1 overflow-y-auto relative">
@@ -820,5 +956,6 @@
     </script>
 </body>
 </html>
+
 
 
