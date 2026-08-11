@@ -11,7 +11,7 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="Student Voice">
     <meta property="og:description" content="พื้นที่ปลอดภัยสำหรับบอกความรู้สึก แสดงความคิดเห็น แจ้งปัญหา หรือขอความช่วยเหลือ">
-    <meta property="og:image" content="https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=800">
+    <!-- ลบ og:image ที่เป็นรูปตัวอย่างออกแล้ว เพื่อไม่ให้ไปโชว์ในพรีวิวลิงก์ -->
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -33,7 +33,11 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/library/d/1CJ8w7_iErTb2lE7q5Aj6qbulbSTY12DwbPlJAUiPvxtFNrbIk8Pl9gPZ/1"; 
+        // =========================================================================
+        // ⚠️ สำคัญมาก! เอา URL เว็บแอปที่ได้จากการ Deploy Google Apps Script มาวางในเครื่องหมายคำพูดด้านล่าง
+        // เช่น "https://script.google.com/macros/s/AKfyc.../exec"
+        // =========================================================================
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyGjkQZEJevJFZIPtsEYTKx09eXli8wvJ6Jui-h9VgaBq5PDa-RzFbi__6jwOtaooRB/exec"; 
 
         const FEELING_EMOJIS_DATA = [
             { emoji: '😀', label: 'ดีมาก', value: 'excellent' },
@@ -72,7 +76,7 @@
                         )}
                         <div className="flex flex-col justify-center">
                             <h1 className="font-bold text-[#1F2937] text-[15px] md:text-lg leading-tight mb-0.5">ระบบรับฟังเสียงนักเรียน</h1>
-                            <p className="text-[10px] md:text-xs text-[#6B7280] font-medium leading-none tracking-wide">{settings.schoolName || 'STUDENT COUNCIL • KHAMMUANG SCHOOL'}</p>
+                            <p className="text-[10px] md:text-xs text-[#6B7280] font-medium leading-none tracking-wide">{settings.schoolName || 'STUDENT COUNCIL'}</p>
                         </div>
                     </div>
                     <button onClick={() => navigateTo('tracking')} className="text-[#6B7280] hover:text-[#C8102E] transition-colors p-2 rounded-full hover:bg-[#FDECEF]">
@@ -200,7 +204,6 @@
                             สภานักเรียน โรงเรียนคำม่วง
                         </div>
                     </div>
-                    {/* เอาข้อความ "โรงเรียนคำม่วง ❤️" ออกไปแล้ว */}
                 </div>
             </div>
         );
@@ -479,7 +482,7 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', details: '', contactInfo: '', contactBack: false, isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
-            const color = "#16A34A"; 
+            const color = "#16A34A";
 
             const categories = ['ความเครียด/ซึมเศร้า', 'ปัญหาครอบครัว', 'ปัญหาความสัมพันธ์/เพื่อน', 'เรื่องการเรียน', 'ต้องการคนรับฟัง', 'อื่นๆ'];
 
@@ -847,11 +850,12 @@
 
             useEffect(() => {
                 const isEnabled = true; 
-                if (isEnabled) {
+                // ถ้าไม่มีรูปภาพ ไม่ต้องโชว์ป๊อปอัพ
+                if (isEnabled && settings.popupImageUrl) {
                     const hiddenUntil = sessionStorage.getItem('hidePopupRef'); 
                     if (!hiddenUntil) setIsVisible(true);
                 }
-            }, []);
+            }, [settings.popupImageUrl]);
 
             const handleClose = () => {
                 if (hideFor7Days) sessionStorage.setItem('hidePopupRef', 'true');
@@ -865,7 +869,7 @@
                     <div className="relative w-full max-w-sm flex flex-col items-center">
                         <button onClick={handleClose} className="absolute -top-14 right-0 w-10 h-10 bg-white/10 hover:bg-white/20 border border-white/30 rounded-full flex items-center justify-center text-white transition-all backdrop-blur-md"><i className="ph ph-x text-lg"></i></button>
                         <a href="#" target="_blank" rel="noreferrer" className="w-full">
-                            <img src={settings.popupImageUrl || "https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=800"} alt="ประกาศ" className="w-full h-auto rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] object-contain max-h-[60vh] border border-white/10" />
+                            <img src={settings.popupImageUrl} alt="ประกาศ" className="w-full h-auto rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] object-contain max-h-[60vh] border border-white/10" />
                         </a>
                         <label className="mt-6 flex items-center gap-3 bg-black/50 border border-white/20 text-white px-5 py-2.5 rounded-full cursor-pointer hover:bg-black/70 transition-all backdrop-blur-md">
                             <input type="checkbox" checked={hideFor7Days} onChange={(e) => setHideFor7Days(e.target.checked)} className="w-5 h-5 accent-gray-500 rounded bg-transparent border-white/40" />
@@ -884,8 +888,8 @@
             const [isAdminAuth, setIsAdminAuth] = useState(false);
             const [tickets, setTickets] = useState([]);
             
-            // ตั้งค่า Default ใหม่ให้ตรงตามที่ต้องการ
-            const settings = { schoolName: "STUDENT COUNCIL • KHAMMUANG SCHOOL", logoUrl: "" };
+            // ลบรูปลิงก์ตัวอย่างออก ปล่อยว่างไว้
+            const settings = { schoolName: "STUDENT COUNCIL • KHAMMUANG SCHOOL", logoUrl: "", popupImageUrl: "" };
 
             useEffect(() => {
                 setTickets([
@@ -902,7 +906,8 @@
                 const newTicket = { id: newId, status: 'pending', date: new Date().toLocaleDateString('en-GB'), title: data.title || data.category, ...data };
                 setTickets(prev => [newTicket, ...prev]);
 
-                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
+                // ส่งข้อมูลไป Google Sheet
+                if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL.startsWith("http")) {
                     try {
                         const payload = { ...data, id: newId };
                         fetch(GOOGLE_SCRIPT_URL, {
@@ -911,7 +916,10 @@
                             body: JSON.stringify(payload)
                         }).catch(e => console.error("Error sending to Sheet:", e));
                     } catch (error) { console.error("Fetch Error:", error); }
+                } else {
+                    console.error("ยังไม่ได้ใส่ GOOGLE_SCRIPT_URL ข้อมูลจึงไม่ถูกส่งไป Google Sheet");
                 }
+                
                 return newId;
             };
 
@@ -956,6 +964,7 @@
     </script>
 </body>
 </html>
+
 
 
 
