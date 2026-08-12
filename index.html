@@ -30,9 +30,6 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // ==========================================================
-        // อัปเดตลิงก์ Web App ตัวใหม่ล่าสุดของคุณภีม
-        // ==========================================================
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3CKwBAOiz6dJQWI-t8nabgSv-46yTcAI8QZHR2KFWtrGJSHuKHdnm7-sCDsfL26yu/exec";
 
         const FEELING_EMOJIS_DATA = [
@@ -97,7 +94,6 @@
             if (!config?.isOpen) return null;
             const isError = config.type === 'error';
             const isSuccess = config.type === 'success';
-            
             return (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 modal-overlay animate-in fade-in">
                     <div className="bg-white rounded-3xl w-full max-w-xs p-6 shadow-2xl text-center animate-in zoom-in-95">
@@ -111,6 +107,25 @@
                 </div>
             );
         };
+
+        // --- COMPONENT สำหรับเปิดเผยตัวตน ---
+        const ContactForm = ({ isAnonymous, setIsAnonymous, contactData, setContactData, accentColor }) => (
+            <div className="p-4 bg-[#F9FAFB] rounded-xl border mt-4">
+                <div className="flex items-start gap-3">
+                    <input type="checkbox" id="anonToggle" checked={!isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 rounded mt-0.5 cursor-pointer" style={{accentColor: accentColor}} />
+                    <label htmlFor="anonToggle" className="text-sm font-bold text-gray-700 cursor-pointer">ต้องการเปิดเผยตัวตน / ให้ติดต่อกลับ</label>
+                </div>
+                {!isAnonymous && (
+                    <div className="mt-4 space-y-3 animate-in fade-in">
+                        <input type="text" placeholder="ชื่อ - นามสกุล" value={contactData.name} onChange={e => setContactData({...contactData, name: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" style={{borderColor: contactData.name ? accentColor : ''}} />
+                        <div className="grid grid-cols-2 gap-3">
+                            <input type="text" placeholder="ชั้น / ห้อง" value={contactData.room} onChange={e => setContactData({...contactData, room: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" />
+                            <input type="text" placeholder="เบอร์โทร / Line" value={contactData.phone} onChange={e => setContactData({...contactData, phone: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" />
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
 
         const SuccessScreen = ({ id, backTo = "home", message = "ส่งข้อมูลเรียบร้อยแล้ว", navigateTo, showTrackingInfo = true }) => {
             const [copied, setCopied] = useState(false);
@@ -193,7 +208,7 @@
                 <div className="grid grid-cols-2 gap-3 mb-8">
                     <button onClick={() => navigateTo('feeling')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-blue-50 text-blue-600 border-blue-100"><i className="ph ph-chat-circle text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">ความรู้สึกของฉัน</h4><p className="text-[11px] text-[#6B7280]">บอกเล่าความรู้สึกวันนี้</p></button>
                     <button onClick={() => navigateTo('feedback')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-purple-50 text-purple-600 border-purple-100"><i className="ph ph-chat-teardrop-text text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">ความคิดเห็น</h4><p className="text-[11px] text-[#6B7280]">เสนอแนะสิ่งต่างๆ</p></button>
-                    <button onClick={() => navigateTo('issue')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-orange-50 text-orange-600 border-orange-100"><i className="ph ph-clipboard-text text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">แจ้งซ่อม/ปัญหา</h4><p className="text-[11px] text-[#6B7280]">ห้องน้ำ, ไฟฟ้า, สถานที่</p></button>
+                    <button onClick={() => navigateTo('issue')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-orange-50 text-orange-600 border-orange-100"><i className="ph ph-clipboard-text text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">แจ้งซ่อม/ปัญหา</h4><p className="text-[11px] text-[#6B7280]">เช่น อาคาร 1 ห้องน้ำชาย</p></button>
                     <button onClick={() => navigateTo('safety')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-red-50 text-[#C8102E] border-red-100"><i className="ph ph-shield-warning text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">เหตุความปลอดภัย</h4><p className="text-[11px] text-[#6B7280]">อุบัติเหตุ, ทะเลาะ, บูลลี่</p></button>
                     <button onClick={() => navigateTo('counseling')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-green-50 text-green-600 border-green-100"><i className="ph ph-hand-heart text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">ปรึกษาปัญหาใจ</h4><p className="text-[11px] text-[#6B7280]">เครียด, การเรียน, ครอบครัว</p></button>
                     <button onClick={() => navigateTo('idea')} className="bg-white p-4 rounded-2xl border hover:shadow-md transition-all text-left flex flex-col h-full group"><div className="w-11 h-11 rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform border bg-yellow-50 text-yellow-600 border-yellow-100"><i className="ph ph-lightbulb text-[22px] ph-fill"></i></div><h4 className="font-semibold text-[15px] mb-1">เสนอไอเดีย</h4><p className="text-[11px] text-[#6B7280]">กิจกรรมใหม่ๆ, สิ่งที่อยากให้มี</p></button>
@@ -227,6 +242,7 @@
                 const id = await submitTicket({ type: 'feeling', category: 'ความรู้สึก', details: `รู้สึก: ${selectedFeeling}\nปัจจัย: ${selectedFactors.join(', ')}\nเพิ่มเติม: ${note}`, isAnonymous });
                 setTrackingId(id);
             };
+            
             if (trackingId) return <SuccessScreen id={trackingId} navigateTo={navigateTo} message="บันทึกความรู้สึกเรียบร้อยแล้ว" showTrackingInfo={false} />;
 
             return (
@@ -249,8 +265,8 @@
                                 </div>
                                 <textarea value={note} onChange={e => setNote(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 text-sm min-h-[100px] mb-4" placeholder="เล่าเรื่องราวเพิ่มเติมให้เราฟังได้นะ..."></textarea>
                                 <div className="flex items-center gap-3 mb-6 p-3 bg-[#F9FAFB] rounded-xl border">
-                                    <input type="checkbox" id="anon" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 accent-[#C8102E] rounded" />
-                                    <label htmlFor="anon" className="text-sm">บันทึกแบบไม่เปิดเผยตัวตน</label>
+                                    <input type="checkbox" id="anon" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 accent-[#C8102E] rounded cursor-pointer" />
+                                    <label htmlFor="anon" className="text-sm cursor-pointer">บันทึกแบบไม่เปิดเผยตัวตน</label>
                                 </div>
                                 <button onClick={handleSubmit} className="w-full bg-[#C8102E] text-white font-bold py-3.5 rounded-xl shadow-md">บันทึกความรู้สึก</button>
                             </div>
@@ -262,14 +278,18 @@
 
         const FeedbackView = ({ navigateTo, submitTicket }) => {
             const [step, setStep] = useState(1);
-            const [formData, setFormData] = useState({ category: '', feedbackType: '', details: '', isAnonymous: true });
+            const [formData, setFormData] = useState({ category: '', feedbackType: '', details: '' });
+            const [isAnonymous, setIsAnonymous] = useState(true);
+            const [contactData, setContactData] = useState({ name: '', room: '', phone: '' });
             const [trackingId, setTrackingId] = useState(null);
             const color = "#9333EA";
             const categories = ['การเรียน', 'ครู', 'เพื่อน', 'กิจกรรม', 'สถานที่', 'อาหาร', 'ความสะอาด', 'ความปลอดภัย', 'เทคโนโลยี', 'กฎระเบียบ', 'สภานักเรียน', 'อื่น ๆ'];
             const feedbackTypes = ['ชื่นชม', 'ข้อเสนอแนะ', 'ปัญหา', 'สิ่งที่อยากให้ปรับปรุง'];
 
             const handleSubmit = async () => {
-                const id = await submitTicket({ type: 'feedback', title: `[${formData.feedbackType}] ${formData.category}`, ...formData });
+                let finalContact = "-";
+                if (!isAnonymous) finalContact = `ชื่อ: ${contactData.name||'-'}\nชั้น: ${contactData.room||'-'}\nติดต่อ: ${contactData.phone||'-'}`;
+                const id = await submitTicket({ type: 'feedback', title: `[${formData.feedbackType}] ${formData.category}`, ...formData, isAnonymous, contactInfo: finalContact });
                 setTrackingId(id); setStep(5);
             };
 
@@ -304,10 +324,7 @@
                             <div className="animate-in fade-in space-y-4">
                                 <h3 className="font-bold mb-3">รายละเอียด</h3>
                                 <textarea placeholder="พิมพ์ความคิดเห็นของคุณที่นี่..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-purple-600 min-h-[150px]"></textarea>
-                                <div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border">
-                                    <input type="checkbox" id="anon" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-purple-600 rounded" />
-                                    <label htmlFor="anon" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                </div>
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 4 && (
@@ -332,7 +349,9 @@
 
         const IssueReportView = ({ navigateTo, submitTicket, showAlert }) => {
             const [step, setStep] = useState(1);
-            const [formData, setFormData] = useState({ category: '', location: '', details: '', isAnonymous: true, images: [] });
+            const [formData, setFormData] = useState({ category: '', location: '', details: '', images: [] });
+            const [isAnonymous, setIsAnonymous] = useState(true);
+            const [contactData, setContactData] = useState({ name: '', room: '', phone: '' });
             const [trackingId, setTrackingId] = useState(null);
             const color = "#EA580C"; 
             const categories = ['ห้องน้ำ', 'โรงอาหาร', 'ไฟฟ้า/น้ำ', 'อาคารเรียน', 'อุปกรณ์ชำรุด', 'ความสะอาด', 'อื่นๆ'];
@@ -347,7 +366,9 @@
             };
 
             const handleSubmit = async () => {
-                const id = await submitTicket({ type: 'issue', title: `[แจ้งปัญหา] ${formData.category}`, ...formData });
+                let finalContact = "-";
+                if (!isAnonymous) finalContact = `ชื่อ: ${contactData.name||'-'}\nชั้น: ${contactData.room||'-'}\nติดต่อ: ${contactData.phone||'-'}`;
+                const id = await submitTicket({ type: 'issue', title: `[แจ้งปัญหา] ${formData.category}`, ...formData, isAnonymous, contactInfo: finalContact });
                 setTrackingId(id); setStep(5);
             };
 
@@ -391,10 +412,7 @@
                                         <div key={i} className="relative w-16 h-16"><img src={img} className="w-full h-full object-cover rounded-lg border" /><button onClick={()=>setFormData(p=>({...p, images: p.images.filter((_,idx)=>idx!==i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"><i className="ph ph-x text-xs"></i></button></div>
                                     ))}
                                 </div>
-                                <div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border mt-4">
-                                    <input type="checkbox" id="anon2" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-orange-600 rounded" />
-                                    <label htmlFor="anon2" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                </div>
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 4 && (
@@ -419,7 +437,9 @@
 
         const SafetyReportView = ({ navigateTo, submitTicket }) => {
             const [step, setStep] = useState(1);
-            const [formData, setFormData] = useState({ category: '', affected: '', location: '', details: '', isAnonymous: true });
+            const [formData, setFormData] = useState({ category: '', affected: '', location: '', details: '' });
+            const [isAnonymous, setIsAnonymous] = useState(true);
+            const [contactData, setContactData] = useState({ name: '', room: '', phone: '' });
             const [trackingId, setTrackingId] = useState(null);
             const color = "#DC2626"; 
 
@@ -427,7 +447,9 @@
             const affectedTypes = ['ตัวฉันเอง', 'เพื่อน', 'ผู้อื่น', 'พบเห็นเหตุการณ์'];
 
             const handleSubmit = async () => {
-                const id = await submitTicket({ type: 'safety', title: `[ความปลอดภัย] ${formData.category}`, priority: 'ด่วน', ...formData });
+                let finalContact = "-";
+                if (!isAnonymous) finalContact = `ชื่อ: ${contactData.name||'-'}\nชั้น: ${contactData.room||'-'}\nติดต่อ: ${contactData.phone||'-'}`;
+                const id = await submitTicket({ type: 'safety', title: `[ความปลอดภัย] ${formData.category}`, priority: 'ด่วน', ...formData, isAnonymous, contactInfo: finalContact });
                 setTrackingId(id); setStep(5);
             };
 
@@ -462,10 +484,7 @@
                             <div className="animate-in fade-in space-y-4">
                                 <div><h3 className="font-bold mb-2">สถานที่เกิดเหตุ</h3><input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-red-600" /></div>
                                 <div><h3 className="font-bold mb-2">อธิบายเหตุการณ์</h3><textarea value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[100px] focus:outline-none focus:border-red-600"></textarea></div>
-                                <div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border">
-                                    <input type="checkbox" id="anon3" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-red-600 rounded" />
-                                    <label htmlFor="anon3" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                </div>
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 4 && (
@@ -490,14 +509,18 @@
 
         const CounselingReportView = ({ navigateTo, submitTicket }) => {
             const [step, setStep] = useState(1);
-            const [formData, setFormData] = useState({ category: '', details: '', contactInfo: '', contactBack: false, isAnonymous: true });
+            const [formData, setFormData] = useState({ category: '', details: '' });
+            const [isAnonymous, setIsAnonymous] = useState(true);
+            const [contactData, setContactData] = useState({ name: '', room: '', phone: '' });
             const [trackingId, setTrackingId] = useState(null);
             const color = "#16A34A"; 
 
             const categories = ['ความเครียด/ซึมเศร้า', 'ปัญหาครอบครัว', 'ปัญหาความสัมพันธ์/เพื่อน', 'เรื่องการเรียน', 'ต้องการคนรับฟัง', 'อื่นๆ'];
 
             const handleSubmit = async () => {
-                const id = await submitTicket({ type: 'counseling', title: `[ปรึกษา] ${formData.category}`, ...formData });
+                let finalContact = "-";
+                if (!isAnonymous) finalContact = `ชื่อ: ${contactData.name||'-'}\nชั้น: ${contactData.room||'-'}\nติดต่อ: ${contactData.phone||'-'}`;
+                const id = await submitTicket({ type: 'counseling', title: `[ปรึกษา] ${formData.category}`, ...formData, isAnonymous, contactInfo: finalContact });
                 setTrackingId(id); setStep(4);
             };
 
@@ -523,11 +546,7 @@
                         {step === 2 && (
                             <div className="animate-in fade-in space-y-5">
                                 <div><h3 className="font-bold mb-2">ระบายสิ่งที่คุณรู้สึก (ไม่บังคับ)</h3><textarea placeholder="พิมพ์สิ่งที่คุณอยากบอกได้เต็มที่เลย..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[120px] focus:outline-none focus:border-green-600"></textarea></div>
-                                <div className="p-4 bg-[#F9FAFB] rounded-xl border space-y-4">
-                                    <div className="flex items-start gap-3"><input type="checkbox" id="cb" checked={formData.contactBack} onChange={() => setFormData({...formData, contactBack: !formData.contactBack})} className="w-5 h-5 accent-green-600 rounded mt-0.5" /><label htmlFor="cb" className="text-sm font-medium">ต้องการให้คุณครูติดต่อกลับเพื่อให้คำปรึกษา</label></div>
-                                    {formData.contactBack && <input type="text" placeholder="ระบุเบอร์โทร หรือ Line ID" value={formData.contactInfo} onChange={e => setFormData({...formData, contactInfo: e.target.value})} className="w-full bg-white border rounded-lg p-2.5 text-sm focus:outline-none focus:border-green-600 ml-8 max-w-[90%]" />}
-                                    <div className="flex items-center gap-3 pt-2 border-t"><input type="checkbox" id="anon4" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-green-600 rounded" /><label htmlFor="anon4" className="text-sm">ปกปิดชื่อและตัวตนของฉัน</label></div>
-                                </div>
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 3 && (
@@ -536,7 +555,6 @@
                                 <div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3">
                                     <div><span className="text-gray-500 block">ด้านที่ปรึกษา</span><span className="font-bold text-green-600">{formData.category}</span></div>
                                     <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
-                                    <div><span className="text-gray-500 block">การติดต่อกลับ</span><span className="font-medium">{formData.contactBack ? `ต้องการ (${formData.contactInfo})` : 'ไม่ต้องการ'}</span></div>
                                 </div>
                             </div>
                         )}
@@ -544,7 +562,7 @@
                     <div className="flex gap-3 mt-6 pb-4">
                         {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-gray-600 bg-white font-medium">ย้อนกลับ</button>}
                         {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={step===1&&!formData.category} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> 
-                        : <button onClick={handleSubmit} disabled={formData.contactBack && !formData.contactInfo} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันส่งข้อมูล</button>}
+                        : <button onClick={handleSubmit} disabled={!isAnonymous && !contactData.phone && !contactData.name} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันส่งข้อมูล</button>}
                     </div>
                 </div>
             );
@@ -552,14 +570,18 @@
 
         const IdeaView = ({ navigateTo, submitTicket }) => {
             const [step, setStep] = useState(1);
-            const [formData, setFormData] = useState({ category: '', details: '', isAnonymous: true });
+            const [formData, setFormData] = useState({ category: '', details: '' });
+            const [isAnonymous, setIsAnonymous] = useState(true);
+            const [contactData, setContactData] = useState({ name: '', room: '', phone: '' });
             const [trackingId, setTrackingId] = useState(null);
             const color = "#CA8A04"; 
 
             const categories = ['กิจกรรมใหม่', 'สิ่งอำนวยความสะดวก', 'การเรียน', 'เทคโนโลยี', 'สิ่งแวดล้อม', 'กฎระเบียบ', 'อื่น ๆ'];
 
             const handleSubmit = async () => {
-                const id = await submitTicket({ type: 'idea', title: `[ไอเดีย] ${formData.category}`, ...formData });
+                let finalContact = "-";
+                if (!isAnonymous) finalContact = `ชื่อ: ${contactData.name||'-'}\nชั้น: ${contactData.room||'-'}\nติดต่อ: ${contactData.phone||'-'}`;
+                const id = await submitTicket({ type: 'idea', title: `[ไอเดีย] ${formData.category}`, ...formData, isAnonymous, contactInfo: finalContact });
                 setTrackingId(id); setStep(4);
             };
 
@@ -585,10 +607,7 @@
                         {step === 2 && (
                             <div className="animate-in fade-in space-y-4">
                                 <div><h3 className="font-bold mb-2">อธิบายไอเดียของคุณ</h3><textarea placeholder="คุณอยากทำอะไร เพื่อปรับปรุงโรงเรียน..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[150px] focus:outline-none focus:border-yellow-500"></textarea></div>
-                                <div className="flex items-center gap-3 p-3 bg-[#F9FAFB] rounded-xl border">
-                                    <input type="checkbox" id="anon5" checked={formData.isAnonymous} onChange={() => setFormData({...formData, isAnonymous: !formData.isAnonymous})} className="w-5 h-5 accent-yellow-500 rounded" />
-                                    <label htmlFor="anon5" className="text-sm">ส่งแบบไม่เปิดเผยตัวตน</label>
-                                </div>
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 3 && (
@@ -610,11 +629,10 @@
             );
         };
 
-        const TrackingView = ({ tickets }) => {
+        const TrackingView = ({ tickets, navigateTo }) => {
             const [searchId, setSearchId] = useState('');
             const [result, setResult] = useState(null);
             
-            // ปกป้องการ map/find ถ้า tickets เป็น null
             const safeTickets = tickets || [];
             const handleSearch = () => setResult(safeTickets.find(t => t.id === searchId.toUpperCase()) || 'notfound');
 
@@ -622,7 +640,8 @@
 
             return (
                 <div className="p-4 py-6">
-                    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]"><i className="ph ph-caret-left"></i> กลับหน้าหลัก</button>
+                    {/* แก้ไขปุ่มกลับหน้าหลักให้กดได้สมบูรณ์ */}
+                    <button onClick={() => { window.scrollTo({ top: 0, behavior: 'smooth' }); navigateTo('home'); }} className="flex items-center gap-1 text-[#C8102E] mb-4 text-sm font-bold active:scale-95 transition-transform"><i className="ph ph-caret-left text-lg"></i> กลับหน้าหลัก</button>
                     <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><i className="ph ph-magnifying-glass text-[#C8102E]"></i> ติดตามสถานะเรื่องแจ้ง</h2>
                     <div className="flex gap-2 mb-6">
                         <input type="text" placeholder="Tracking ID (เช่น KM-2026-0001)" value={searchId} onChange={(e) => setSearchId(e.target.value)} className="flex-1 border p-3 rounded-xl uppercase focus:outline-none focus:border-[#C8102E] font-mono text-sm shadow-sm" />
@@ -752,27 +771,33 @@
 
             const handleLogout = () => { setIsAdminAuth(false); setCurrentView('home'); };
 
+            // ตัวอ่านวันที่แบบแข็งแกร่ง (แก้ปัญหาบัค 0 ในแดชบอร์ด)
             const parseThaiDate = (dateStr) => {
-                if (!dateStr) return new Date();
-                const parts = String(dateStr).split(' ')[0].split('/'); 
-                if (parts.length === 3) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
-                return new Date(dateStr);
+                if (!dateStr) return new Date(0); 
+                const str = String(dateStr);
+                if (str.includes('/')) {
+                    const parts = str.split(' ')[0].split('/');
+                    if (parts.length === 3) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+                }
+                const d = new Date(str);
+                return isNaN(d.getTime()) ? new Date(0) : d;
             };
 
-            // ปกป้องการพังถ้าไม่มีข้อมูล
             const safeTickets = tickets || [];
 
+            // คำนวณวันที่แบบยืดหยุ่น ป้องกันปัญหา Timezone
             const filteredTickets = safeTickets.filter(t => {
                 const tDate = parseThaiDate(t?.date);
                 const now = new Date();
-                const diffDays = Math.ceil(Math.abs(now - tDate) / (1000 * 60 * 60 * 24));
-                if(timeFilter === 'today') return diffDays <= 1;
-                if(timeFilter === '7days') return diffDays <= 7;
-                if(timeFilter === '30days') return diffDays <= 30;
+                const diffTime = Math.abs(now.getTime() - tDate.getTime());
+                const diffDays = diffTime / (1000 * 60 * 60 * 24);
+                
+                if(timeFilter === 'today') return diffDays <= 1.5; 
+                if(timeFilter === '7days') return diffDays <= 7.5;
+                if(timeFilter === '30days') return diffDays <= 30.5;
                 return true;
             });
 
-            // คำนวณเปอร์เซ็นต์หมวดหมู่ของจริง
             const catCounts = { issue: 0, idea: 0, counseling: 0, safety: 0, feedback: 0 };
             filteredTickets.forEach(t => {
                 if(t.type === 'issue') catCounts.issue++;
@@ -784,7 +809,6 @@
             const totalCategorized = catCounts.issue + catCounts.idea + catCounts.counseling + catCounts.safety + catCounts.feedback;
             const getPct = (count) => totalCategorized === 0 ? 0 : Math.round((count / totalCategorized) * 100);
 
-            // คำนวณความรู้สึกของจริง
             const feelingCounts = { excellent: 0, good: 0, neutral: 0, bad: 0, terrible: 0 };
             filteredTickets.forEach(t => {
                 if (t.type === 'feeling' && t.details) {
@@ -797,6 +821,8 @@
                 if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
                 setIsSavingSettings(true);
                 setSettings(editSettings); 
+                // บันทึกลง Local Storage ทันทีเพื่อความรวดเร็วตอนโหลดแอปใหม่
+                localStorage.setItem('sv_settings', JSON.stringify(editSettings));
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSettings', settings: editSettings }) });
                     showAlert('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว', 'success');
@@ -822,7 +848,7 @@
                 const isSimpleStatus = ['feeling', 'idea', 'feedback'].includes(ticket.type);
 
                 return (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4">
+                    <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4 animate-in fade-in">
                         <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in zoom-in-95">
                             <div className="sticky top-0 bg-white border-b px-5 py-4 flex justify-between items-center z-10">
                                 <h3 className="font-bold text-lg">จัดการเรื่องแจ้ง</h3>
@@ -840,7 +866,7 @@
                                     <div><span className="text-gray-400 block">วันที่</span> {ticket.date}</div>
                                     <div><span className="text-gray-400 block">หมวดหมู่</span> {ticket.category}</div>
                                     <div className="col-span-2"><span className="text-gray-400 block">ตัวตนผู้แจ้ง</span> {ticket.isAnonymous ? 'ปกปิด (Anonymous)' : 'เปิดเผย'}</div>
-                                    {ticket.contactInfo && ticket.contactInfo !== '-' && <div className="col-span-2"><span className="text-gray-400 block">ติดต่อกลับ</span> {ticket.contactInfo}</div>}
+                                    {ticket.contactInfo && ticket.contactInfo !== '-' && <div className="col-span-2"><span className="text-gray-400 block">ติดต่อกลับ / ข้อมูลตัวตน</span> <span className="whitespace-pre-line block mt-1 text-gray-700">{ticket.contactInfo}</span></div>}
                                 </div>
                                 <div><h5 className="text-sm font-bold text-gray-700 mb-1">รายละเอียด</h5><p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border whitespace-pre-line">{ticket.details}</p></div>
                                 
@@ -848,8 +874,8 @@
                                     <div className="border-t pt-4 mt-2">
                                         <h5 className="text-sm font-bold text-gray-700 mb-2">อัปเดตสถานะการทำงาน</h5>
                                         <div className="flex gap-2">
-                                            <button onClick={() => {onUpdateStatus(ticket.id, 'investigating'); showAlert('ปรับสถานะเป็น "กำลังตรวจสอบ" แล้ว', 'success'); }} className="flex-1 py-2 text-xs rounded-lg font-bold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100">กำลังตรวจสอบ</button>
-                                            <button onClick={() => {onUpdateStatus(ticket.id, 'resolved'); showAlert('ปรับสถานะเป็น "เสร็จสิ้น" แล้ว', 'success'); }} className="flex-1 py-2 text-xs rounded-lg font-bold bg-green-50 text-green-600 border border-green-200 hover:bg-green-100">ดำเนินการเสร็จสิ้น</button>
+                                            <button onClick={() => {onUpdateStatus(ticket.id, 'investigating'); showAlert('ปรับสถานะเป็น "กำลังตรวจสอบ" แล้ว', 'success'); }} className="flex-1 py-2 text-xs rounded-lg font-bold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors">กำลังตรวจสอบ</button>
+                                            <button onClick={() => {onUpdateStatus(ticket.id, 'resolved'); showAlert('ปรับสถานะเป็น "เสร็จสิ้น" แล้ว', 'success'); }} className="flex-1 py-2 text-xs rounded-lg font-bold bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors">ดำเนินการเสร็จสิ้น</button>
                                         </div>
                                     </div>
                                 )}
@@ -867,9 +893,10 @@
 
             return (
                 <div className="flex h-screen bg-[#F3F4F6] w-full absolute inset-0 z-50">
+                    {/* Sidebar iPad/PC */}
                     <div className="w-64 bg-white border-r hidden md:flex flex-col shadow-sm">
                         <div className="p-4 border-b flex items-center gap-3">
-                            <div className="w-8 h-8 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div>
+                            {settings?.logoUrl ? <img src={settings.logoUrl} className="w-8 h-8 rounded-lg object-cover border" /> : <div className="w-8 h-8 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div>}
                             <span className="font-bold">Admin Panel</span>
                         </div>
                         <div className="flex-1 p-4 space-y-2">
@@ -880,17 +907,22 @@
                     </div>
 
                     <div className="flex-1 flex flex-col h-full overflow-hidden">
+                        {/* Header Admin */}
                         <div className="bg-white px-4 py-3 border-b flex justify-between items-center shadow-sm z-10 sticky top-0">
-                            <div className="flex items-center gap-3 md:hidden"><div className="w-9 h-9 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div><div><h1 className="font-bold leading-tight">Admin</h1></div></div>
+                            <div className="flex items-center gap-3 md:hidden">
+                                {settings?.logoUrl ? <img src={settings.logoUrl} className="w-9 h-9 rounded-lg object-cover border shadow-sm" /> : <div className="w-9 h-9 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div>}
+                                <div><h1 className="font-bold leading-tight">Admin</h1></div>
+                            </div>
                             <div className="hidden md:block font-bold text-lg text-gray-800">
                                 {adminTab === 'overview' ? 'ภาพรวมระบบ' : adminTab === 'tickets' ? 'จัดการเรื่องแจ้ง' : 'ตั้งค่าระบบ'}
                             </div>
                             <div className="flex items-center gap-4">
-                                <div className="hidden md:flex items-center gap-2"><div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center"><i className="ph ph-user text-gray-500"></i></div><span className="text-sm font-medium text-gray-700">Super Admin</span></div>
-                                <button onClick={handleLogout} className="text-sm bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-medium flex items-center gap-1 hover:bg-red-100 transition-colors"><i className="ph ph-sign-out"></i> ออก</button>
+                                {/* ถอดคำว่า Super Admin และไอคอนรูปคนออกตามสั่ง */}
+                                <button onClick={handleLogout} className="text-sm bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-red-100 transition-colors"><i className="ph ph-sign-out"></i> ออกระบบ</button>
                             </div>
                         </div>
                         
+                        {/* Mobile Tabs */}
                         <div className="bg-white border-b px-2 flex overflow-x-auto hide-scrollbar z-10 md:hidden">
                             <button onClick={() => setAdminTab('overview')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'overview' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-squares-four text-lg"></i> แดชบอร์ด</button>
                             <button onClick={() => setAdminTab('tickets')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'tickets' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-list-dashes text-lg"></i> แจ้งเรื่อง ({safeTickets.length})</button>
@@ -936,14 +968,15 @@
 
                                     <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mt-6">
                                         <div className="p-4 border-b bg-gray-50"><h3 className="font-bold text-gray-800">รายการล่าสุด</h3></div>
-                                        {filteredTickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
+                                        {/* รายการล่าสุด ให้โชว์ข้อมูลของจริง 5 อันดับแรกเสมอ โดยไม่ต้องสนตัวกรองเวลา (เพื่อให้มีข้อมูลโชว์ตลอด) */}
+                                        {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-sm text-left">
                                                     <thead className="bg-gray-50 text-gray-500 border-b">
                                                         <tr><th className="px-4 py-3 font-medium">Tracking ID</th><th className="px-4 py-3 font-medium">หมวดหมู่</th><th className="px-4 py-3 font-medium">หัวข้อ</th><th className="px-4 py-3 font-medium">สถานะ</th></tr>
                                                     </thead>
                                                     <tbody className="divide-y">
-                                                        {filteredTickets.slice(0,5).map(t => (
+                                                        {safeTickets.slice(0,5).map(t => (
                                                             <tr key={t.id} onClick={() => setSelectedTicket(t)} className="hover:bg-gray-50 cursor-pointer transition-colors">
                                                                 <td className="px-4 py-3 font-mono text-gray-600">{t.id}</td>
                                                                 <td className="px-4 py-3"><span className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs">{t.category}</span></td>
@@ -1018,8 +1051,15 @@
                             )}
                         </div>
                         
-                        {selectedTicket && <TicketDetailModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} onUpdateStatus={(id, s) => { updateTicketStatus(id, s); setSelectedTicket(null); }} onDeleteClick={(id) => setConfirmDeleteId(id)} />}
-                        
+                        {selectedTicket && (
+                            <TicketDetailModal 
+                                ticket={selectedTicket} 
+                                onClose={() => setSelectedTicket(null)} 
+                                onUpdateStatus={(id, s) => { updateTicketStatus(id, s); setSelectedTicket(null); }} 
+                                onDeleteClick={(id) => setConfirmDeleteId(id)} 
+                            />
+                        )}
+
                         <ConfirmModal 
                             isOpen={!!confirmDeleteId}
                             title="ยืนยันการลบข้อมูล"
@@ -1036,6 +1076,9 @@
             );
         };
 
+        // ==========================================
+        // POPUP
+        // ==========================================
         const PosterPopup = ({ settings }) => {
             const [isVisible, setIsVisible] = useState(false);
             const [hideFor7Days, setHideFor7Days] = useState(false);
@@ -1072,6 +1115,9 @@
             );
         };
 
+        // ==========================================
+        // MAIN APP RENDER
+        // ==========================================
         function App() {
             const [currentView, setCurrentView] = useState('home');
             const [isAdminAuth, setIsAdminAuth] = useState(false);
@@ -1079,8 +1125,10 @@
             const [isLoading, setIsLoading] = useState(false); 
             const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: 'info', message: '' });
             
-            const [settings, setSettings] = useState({ 
-                schoolName: "STUDENT COUNCIL", logoUrl: "", popupEnabled: false, popupImageUrl: "" 
+            // อ่านค่า Settings ทันทีจาก Local Storage (ป้องกันโลโก้เด้ง)
+            const [settings, setSettings] = useState(() => {
+                const saved = localStorage.getItem('sv_settings');
+                return saved ? JSON.parse(saved) : { schoolName: "STUDENT COUNCIL", logoUrl: "", popupEnabled: false, popupImageUrl: "" };
             });
 
             const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
@@ -1094,7 +1142,11 @@
                         const json = await res.json();
                         if(json.status === 'success') {
                             if(json.tickets && Array.isArray(json.tickets)) setTickets(json.tickets);
-                            if(json.settings) setSettings(prev => ({...prev, ...json.settings}));
+                            if(json.settings) {
+                                setSettings(prev => ({...prev, ...json.settings}));
+                                // เซฟค่าใหม่ลงเครื่อง
+                                localStorage.setItem('sv_settings', JSON.stringify(json.settings));
+                            }
                         }
                     } catch(e) { console.error("Error fetching data:", e); }
                     setIsLoading(false);
@@ -1160,7 +1212,7 @@
                                     {currentView === 'issue' && <IssueReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
                                     {currentView === 'safety' && <SafetyReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
                                     {currentView === 'counseling' && <CounselingReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
-                                    {currentView === 'tracking' && <TrackingView tickets={tickets} />}
+                                    {currentView === 'tracking' && <TrackingView tickets={tickets} navigateTo={navigateTo} />}
                                 </main>
                                 <BottomNav currentView={currentView} navigateTo={navigateTo} />
                             </>
