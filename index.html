@@ -31,6 +31,7 @@
         const { useState, useEffect, useRef } = React;
 
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3CKwBAOiz6dJQWI-t8nabgSv-46yTcAI8QZHR2KFWtrGJSHuKHdnm7-sCDsfL26yu/exec";
+
         const HARDCODED_LOGO = "https://i.postimg.cc/wBN5btrp/rong-re-yn-kham-wng.png";
         const HARDCODED_NAME = "STUDENT COUNCIL • KHAMMUANG SCHOOL";
 
@@ -41,7 +42,7 @@
         ];
         const FEELING_FACTORS_DATA = ['เพื่อน', 'การเรียน', 'ครู', 'กิจกรรม', 'ครอบครัว', 'สถานที่', 'อาหาร', 'ความปลอดภัย', 'งาน / การบ้าน', 'การเดินทาง', 'เรื่องส่วนตัว', 'อื่น ๆ'];
 
-        // --- COMPONENTS ---
+        // --- SHARED COMPONENTS ---
         const Header = ({ navigateTo, onAdminTrigger }) => {
             const [logoClicks, setLogoClicks] = useState(0);
             const clickTimeoutRef = useRef(null);
@@ -120,8 +121,8 @@
                         <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
                         <p className="text-sm text-gray-500 mb-6">{message}</p>
                         <div className="flex gap-3">
-                            <button onClick={onCancel} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">ยกเลิก</button>
-                            <button onClick={onConfirm} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-md">ยืนยันลบ</button>
+                            <button type="button" onClick={onCancel} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">ยกเลิก</button>
+                            <button type="button" onClick={onConfirm} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-md">ยืนยันลบ</button>
                         </div>
                     </div>
                 </div>
@@ -768,7 +769,8 @@
         const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets, updateTicketStatus, deleteTicket, settings, setSettings, showAlert }) => {
             const [adminTab, setAdminTab] = useState('overview'); 
             const [selectedTicket, setSelectedTicket] = useState(null);
-            const [timeFilter, setTimeFilter] = useState('all'); 
+            const [timeFilter, setTimeFilter] = useState('today'); 
+            const [ticketCategory, setTicketCategory] = useState('all'); 
             
             const [editSettings, setEditSettings] = useState(settings || {});
             const [passwords, setPasswords] = useState({ old: '', new: '' });
@@ -785,13 +787,12 @@
                 const s = String(dateStr).trim();
                 if (s.includes('/')) {
                     const parts = s.split(' ')[0].split('/');
-                    if (parts.length === 3) return new Date(parseInt(parts[2]||0, 10), parseInt(parts[1]||1, 10) - 1, parseInt(parts[0]||1, 10));
+                    if (parts.length >= 3) return new Date(parseInt(parts[2]||0, 10), parseInt(parts[1]||1, 10) - 1, parseInt(parts[0]||1, 10));
                 }
                 const d = new Date(s);
                 return isNaN(d.getTime()) ? new Date(0) : d;
             };
 
-            // หุ้มเกราะให้ตั๋วทุกใบ
             const safeTickets = Array.isArray(tickets) ? tickets : [];
             const validTickets = safeTickets.filter(t => t && typeof t === 'object');
 
@@ -808,6 +809,11 @@
                 if(timeFilter === '7days') return diffDays <= 7.5;
                 if(timeFilter === '30days') return diffDays <= 30.5;
                 return true; 
+            });
+
+            const displayedTicketList = validTickets.filter(t => {
+                if (ticketCategory === 'all') return true;
+                return t?.type === ticketCategory;
             });
 
             const getPendingCount = () => {
@@ -885,17 +891,16 @@
                 setIsChangingPass(false); 
             };
 
-            const renderTicketModal = () => {
-                if (!selectedTicket) return null;
-                const ticket = selectedTicket;
-                const isSimpleStatus = ['feeling', 'idea', 'feedback'].includes(ticket?.type);
+            const TicketDetailModal = ({ ticket, onClose, onUpdateStatus, onDeleteClick }) => {
+                if (!ticket) return null;
+                const isSimpleStatus = ['feeling', 'idea', 'feedback'].includes(ticket.type);
 
                 return (
                     <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4 animate-in fade-in">
                         <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in zoom-in-95">
                             <div className="sticky top-0 bg-white border-b px-5 py-4 flex justify-between items-center z-10">
                                 <h3 className="font-bold text-lg">จัดการเรื่องแจ้ง</h3>
-                                <button onClick={() => setSelectedTicket(null)} className="p-1 bg-gray-100 rounded-full hover:bg-gray-200"><i className="ph ph-x text-lg"></i></button>
+                                <button type="button" onClick={onClose} className="p-1 bg-gray-100 rounded-full hover:bg-gray-200"><i className="ph ph-x text-lg"></i></button>
                             </div>
                             
                             <div className="p-5 space-y-4">
@@ -917,7 +922,16 @@
                                             <div className="flex gap-2 flex-wrap">
                                                 {ticket.images.map((img, idx) => {
                                                     if(img && String(img).trim() !== '') {
-                                                        return <a key={idx} href={img} target="_blank" className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center gap-1"><i className="ph ph-link"></i> เปิดดูรูปที่ {idx + 1}</a>
+                                                        return (
+                                                            <button 
+                                                                type="button"
+                                                                key={idx} 
+                                                                onClick={() => window.open(img.trim(), '_blank', 'noopener,noreferrer')} 
+                                                                className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center gap-1 cursor-pointer transition-colors"
+                                                            >
+                                                                <i className="ph ph-link"></i> เปิดดูรูปที่ {idx + 1}
+                                                            </button>
+                                                        )
                                                     }
                                                     return null;
                                                 })}
@@ -931,14 +945,14 @@
                                     <div className="border-t pt-4 mt-2">
                                         <h5 className="text-sm font-bold text-gray-700 mb-2">อัปเดตสถานะการทำงาน</h5>
                                         <div className="flex gap-2">
-                                            <button onClick={() => {onUpdateStatus(ticket?.id, 'investigating'); showAlert('ปรับสถานะเป็น "กำลังตรวจสอบ" แล้ว', 'success'); setSelectedTicket(null);}} className="flex-1 py-2 text-xs rounded-lg font-bold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors">กำลังตรวจสอบ</button>
-                                            <button onClick={() => {onUpdateStatus(ticket?.id, 'resolved'); showAlert('ปรับสถานะเป็น "เสร็จสิ้น" แล้ว', 'success'); setSelectedTicket(null);}} className="flex-1 py-2 text-xs rounded-lg font-bold bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors">ดำเนินการเสร็จสิ้น</button>
+                                            <button type="button" onClick={() => {onUpdateStatus(ticket?.id, 'investigating'); showAlert('ปรับสถานะเป็น "กำลังตรวจสอบ" แล้ว', 'success'); setSelectedTicket(null);}} className="flex-1 py-2 text-xs rounded-lg font-bold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors">กำลังตรวจสอบ</button>
+                                            <button type="button" onClick={() => {onUpdateStatus(ticket?.id, 'resolved'); showAlert('ปรับสถานะเป็น "เสร็จสิ้น" แล้ว', 'success'); setSelectedTicket(null);}} className="flex-1 py-2 text-xs rounded-lg font-bold bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors">ดำเนินการเสร็จสิ้น</button>
                                         </div>
                                     </div>
                                 )}
 
                                 <div className="border-t pt-4 mt-2">
-                                    <button onClick={() => setConfirmDeleteId(ticket?.id)} className="w-full py-2.5 text-sm rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
+                                    <button type="button" onClick={() => onDeleteClick(ticket?.id)} className="w-full py-2.5 text-sm rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
                                         <i className="ph ph-trash text-lg"></i> ลบข้อมูลนี้
                                     </button>
                                 </div>
@@ -994,7 +1008,7 @@
 
                                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                                         <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clipboard-text text-gray-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">เรื่องทั้งหมด</p></div><p className="font-bold text-3xl text-gray-800">{filteredTickets.length}</p></div>
-                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ / ตรวจสอบ</p></div><p className="font-bold text-3xl text-amber-500">{getPendingCount()}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ</p></div><p className="font-bold text-3xl text-amber-500">{getPendingCount()}</p></div>
                                         <div className="bg-white p-5 rounded-2xl border shadow-sm col-span-2 md:col-span-1 flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-check-circle text-green-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">แก้ไข/รับทราบ</p></div><p className="font-bold text-3xl text-green-500">{getResolvedCount()}</p></div>
                                     </div>
 
@@ -1022,14 +1036,14 @@
 
                                     <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mt-6">
                                         <div className="p-4 border-b bg-gray-50"><h3 className="font-bold text-gray-800">รายการล่าสุด</h3></div>
-                                        {validTickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
+                                        {filteredTickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-sm text-left">
                                                     <thead className="bg-gray-50 text-gray-500 border-b">
                                                         <tr><th className="px-4 py-3 font-medium">Tracking ID</th><th className="px-4 py-3 font-medium">หมวดหมู่</th><th className="px-4 py-3 font-medium">หัวข้อ</th><th className="px-4 py-3 font-medium">สถานะ</th></tr>
                                                     </thead>
                                                     <tbody className="divide-y">
-                                                        {validTickets.slice(0,10).map((t, i) => (
+                                                        {filteredTickets.slice(0,10).map((t, i) => (
                                                             <tr key={t?.id || i} onClick={() => setSelectedTicket(t)} className="hover:bg-gray-50 cursor-pointer transition-colors">
                                                                 <td className="px-4 py-3 font-mono text-gray-600">{t?.id}</td>
                                                                 <td className="px-4 py-3"><span className="px-2 py-1 rounded bg-gray-100 text-gray-600 text-xs">{t?.category}</span></td>
@@ -1047,19 +1061,29 @@
                                 </div>
                             )}
                             {adminTab === 'tickets' && (
-                                <div className="space-y-3 animate-in fade-in max-w-4xl mx-auto">
-                                    {validTickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการในระบบ</p> : validTickets.map((t, i) => (
-                                        <div key={t?.id || i} onClick={() => setSelectedTicket(t)} className="bg-white p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:border-gray-300 transition-all">
-                                            <div className="flex justify-between mb-2">
-                                                <span className="font-mono text-xs text-gray-500">{t?.id}</span>
-                                                <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${t?.status === 'resolved' || ['feeling', 'idea', 'feedback'].includes(t?.type) ? 'bg-green-100 text-green-700' : t?.status === 'investigating' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
-                                                    {['feeling', 'idea', 'feedback'].includes(t?.type) ? 'รับทราบแล้ว' : t?.status === 'resolved' ? 'เสร็จสิ้น' : t?.status === 'investigating' ? 'กำลังตรวจสอบ' : 'รอดำเนินการ'}
-                                                </span>
+                                <div className="animate-in fade-in max-w-4xl mx-auto h-full flex flex-col">
+                                    <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-3 mb-2 sticky top-0 bg-[#F3F4F6] z-10 pt-2">
+                                        {[{id: 'all', label: 'ทั้งหมด'}, {id: 'feeling', label: 'ความรู้สึก'}, {id: 'feedback', label: 'ความคิดเห็น'}, {id: 'issue', label: 'แจ้งซ่อม/ปัญหา'}, {id: 'safety', label: 'ความปลอดภัย'}, {id: 'counseling', label: 'ปรึกษาปัญหา'}, {id: 'idea', label: 'เสนอไอเดีย'}].map(cat => (
+                                            <button key={cat.id} onClick={() => setTicketCategory(cat.id)} className={`px-4 py-2 rounded-full text-xs font-bold transition-colors whitespace-nowrap shadow-sm border ${ticketCategory === cat.id ? 'bg-[#C8102E] text-white border-[#C8102E]' : 'bg-white text-gray-600 hover:bg-gray-50 border-gray-200'}`}>{cat.label}</button>
+                                        ))}
+                                    </div>
+
+                                    <div className="space-y-3 pb-12 flex-1 overflow-y-auto">
+                                        {displayedTicketList.length === 0 ? <p className="text-center text-gray-500 p-6 bg-white rounded-xl border border-dashed">ไม่พบข้อมูลในหมวดหมู่นี้</p> : displayedTicketList.map((t, i) => (
+                                            <div key={t?.id || i} onClick={() => setSelectedTicket(t)} className="bg-white p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:border-[#C8102E] transition-all">
+                                                <div className="flex justify-between items-start mb-2 gap-2">
+                                                    <div className="flex flex-col">
+                                                        <span className="font-mono text-[10px] text-gray-400 mb-0.5">{t?.id} • {t?.date}</span>
+                                                        <h3 className="font-bold text-sm text-gray-800 leading-tight">{t?.title}</h3>
+                                                    </div>
+                                                    <span className={`px-2.5 py-1 rounded text-[10px] font-bold whitespace-nowrap ${t?.status === 'resolved' || ['feeling', 'idea', 'feedback'].includes(t?.type) ? 'bg-green-100 text-green-700' : t?.status === 'investigating' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                                                        {['feeling', 'idea', 'feedback'].includes(t?.type) ? 'รับทราบแล้ว' : t?.status === 'resolved' ? 'เสร็จสิ้น' : t?.status === 'investigating' ? 'กำลังตรวจสอบ' : 'รอดำเนินการ'}
+                                                    </span>
+                                                </div>
+                                                <p className="text-xs text-gray-500 line-clamp-1">{t?.details}</p>
                                             </div>
-                                            <h3 className="font-bold text-sm text-gray-800">{t?.title}</h3>
-                                            <p className="text-xs text-gray-500 mt-1 line-clamp-1">{t?.details}</p>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                             {adminTab === 'settings' && (
@@ -1071,7 +1095,7 @@
                                                 <label className="block text-sm text-gray-600 mb-1">รายชื่อห้องเรียน (คั่นด้วยลูกน้ำ)</label>
                                                 <textarea value={editSettings?.classrooms || ""} onChange={e => setEditSettings({...editSettings, classrooms: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E] min-h-[100px]" placeholder="ม.1/1,ม.1/2,ม.2/1"></textarea>
                                             </div>
-                                            <button onClick={handleSaveRooms} disabled={isSavingRooms} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2 transition-colors">
+                                            <button type="button" onClick={handleSaveRooms} disabled={isSavingRooms} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2 transition-colors">
                                                 {isSavingRooms ? 'กำลังบันทึก...' : 'บันทึกข้อมูลห้องเรียน'}
                                             </button>
                                         </div>
@@ -1084,7 +1108,7 @@
                                                 <input type="checkbox" checked={editSettings?.popupEnabled || false} onChange={e => setEditSettings({...editSettings, popupEnabled: e.target.checked})} className="w-5 h-5 accent-[#C8102E] cursor-pointer" /> เปิดใช้งานป๊อปอัพ
                                             </label>
                                             <input type="text" placeholder="URL รูปภาพป๊อปอัพ" value={editSettings?.popupImageUrl || ""} onChange={e => setEditSettings({...editSettings, popupImageUrl: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
-                                            <button onClick={handleSavePopup} disabled={isSavingPopup} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                                            <button type="button" onClick={handleSavePopup} disabled={isSavingPopup} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
                                                 {isSavingPopup ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่าป๊อปอัพ'}
                                             </button>
                                         </div>
@@ -1095,7 +1119,7 @@
                                         <div className="space-y-4">
                                             <input type="password" placeholder="รหัสผ่านปัจจุบัน" value={passwords.old} onChange={e=>setPasswords({...passwords, old: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
                                             <input type="password" placeholder="รหัสผ่านใหม่ (8 หลัก)" value={passwords.new} onChange={e=>setPasswords({...passwords, new: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
-                                            <button onClick={handleChangePassword} disabled={isChangingPass} className="bg-amber-600 disabled:bg-amber-300 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                                            <button type="button" onClick={handleChangePassword} disabled={isChangingPass} className="bg-amber-600 disabled:bg-amber-300 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
                                                 {isChangingPass ? 'กำลังเปลี่ยนรหัสผ่าน...' : 'เปลี่ยนรหัสผ่าน'}
                                             </button>
                                         </div>
@@ -1166,8 +1190,6 @@
             const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: 'info', message: '' });
             
             const [settings, setSettings] = useState({ popupEnabled: false, popupImageUrl: "", classrooms: "" });
-            
-            // รอให้ดึงข้อมูลเสร็จก่อน ค่อยยอมให้โชว์หน้าแอปเต็มๆ
             const [isInitialFetchDone, setIsInitialFetchDone] = useState(false); 
 
             const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
@@ -1204,7 +1226,9 @@
             const submitTicketData = async (data) => {
                 const newId = `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
                 const now = new Date();
-                const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
+                // 💡 สร้างวันที่ พร้อมเวลาแบบ HH:mm เพื่อให้ตรงกับฝั่งแอดมิน
+                const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                
                 const newTicket = { id: newId, status: 'pending', date: formattedDate, title: data.title || data.category, ...data };
                 
                 setTickets(prev => [newTicket, ...(Array.isArray(prev) ? prev : [])]);
@@ -1233,6 +1257,17 @@
                 }
                 showAlert("ลบข้อมูลออกจากระบบแล้ว", "success");
             };
+
+            if (!isInitialFetchDone) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center bg-gray-200">
+                        <div className="w-full max-w-md h-screen bg-[#F7F8FA] flex flex-col items-center justify-center shadow-2xl">
+                            <div className="w-12 h-12 border-4 border-[#C8102E] border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <p className="text-gray-500 font-bold">กำลังโหลดข้อมูลระบบ...</p>
+                        </div>
+                    </div>
+                );
+            }
 
             return (
                 <div className="min-h-screen flex justify-center bg-gray-200">
