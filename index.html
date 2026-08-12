@@ -31,10 +31,9 @@
         const { useState, useEffect, useRef } = React;
 
         // ==========================================================
-        // ⚠️ ใส่ลิงก์ Web App ตรงนี้
+        // อัปเดตลิงก์ Web App ตัวใหม่ล่าสุดของคุณภีม
         // ==========================================================
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3CKwBAOiz6dJQWI-t8nabgSv-46yTcAI8QZHR2KFWtrGJSHuKHdnm7-sCDsfL26yu/exec
-";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3CKwBAOiz6dJQWI-t8nabgSv-46yTcAI8QZHR2KFWtrGJSHuKHdnm7-sCDsfL26yu/exec";
 
         const FEELING_EMOJIS_DATA = [
             { emoji: '😀', label: 'ดีมาก', value: 'excellent' }, { emoji: '🙂', label: 'ดี', value: 'good' },
@@ -58,11 +57,11 @@
             return (
                 <header className="bg-white border-b border-[#E5E7EB] px-4 py-3 flex justify-between items-center shadow-sm z-40">
                     <div className="flex items-center gap-3" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
-                        {settings.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="w-11 h-11 rounded-full object-cover border shadow-sm" /> 
+                        {settings?.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="w-11 h-11 rounded-full object-cover border shadow-sm" /> 
                         : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#C8102E] to-[#9E0B23] flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-[#FDECEF]">KM</div>}
                         <div className="flex flex-col justify-center">
                             <h1 className="font-bold text-[#1F2937] text-[15px] md:text-lg leading-tight mb-0.5">ระบบรับฟังเสียงนักเรียน</h1>
-                            <p className="text-[10px] md:text-xs text-[#6B7280] font-medium leading-none tracking-wide">{settings.schoolName || 'STUDENT COUNCIL'}</p>
+                            <p className="text-[10px] md:text-xs text-[#6B7280] font-medium leading-none tracking-wide">{settings?.schoolName || 'STUDENT COUNCIL'}</p>
                         </div>
                     </div>
                     <button onClick={() => navigateTo('tracking')} className="text-[#6B7280] hover:text-[#C8102E] transition-colors p-2 rounded-full hover:bg-[#FDECEF]">
@@ -95,7 +94,7 @@
         };
 
         const CustomAlert = ({ config, onClose }) => {
-            if (!config.isOpen) return null;
+            if (!config?.isOpen) return null;
             const isError = config.type === 'error';
             const isSuccess = config.type === 'success';
             
@@ -113,7 +112,6 @@
             );
         };
 
-        // ปรับ SuccessScreen ให้รับค่า showTrackingInfo เพื่อซ่อนเลขได้
         const SuccessScreen = ({ id, backTo = "home", message = "ส่งข้อมูลเรียบร้อยแล้ว", navigateTo, showTrackingInfo = true }) => {
             const [copied, setCopied] = useState(false);
             const handleCopy = () => {
@@ -129,7 +127,6 @@
                     <h2 className="text-2xl font-bold text-[#1F2937] mb-2">{message}</h2>
                     <p className="text-[#6B7280] mb-8 text-sm">ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการพัฒนาโรงเรียนของเรา</p>
                     
-                    {/* จะแสดงกล่องรหัส Tracking เฉพาะตอนที่ showTrackingInfo เป็น true เท่านั้น */}
                     {showTrackingInfo && id && (
                         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 mb-8 shadow-sm w-full max-w-sm">
                             <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-3 mb-5">
@@ -154,10 +151,10 @@
             <div className="flex items-center mb-8">
                 {Array.from({ length: total }, (_, i) => i + 1).map((s) => (
                     <React.Fragment key={s}>
-                        <div className={`w-8 h-8 min-w-[32px] rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${current >= s ? `bg-[${color}] border-[${color}] text-white` : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`} style={current >= s ? {backgroundColor: color, borderColor: color} : {}}>
+                        <div className={`w-8 h-8 min-w-[32px] rounded-full flex items-center justify-center text-sm font-bold border-2 transition-colors ${current >= s ? `text-white` : 'bg-white border-[#E5E7EB] text-[#9CA3AF]'}`} style={current >= s ? {backgroundColor: color, borderColor: color} : {}}>
                             {current > s ? <i className="ph ph-check-circle text-[16px]"></i> : s}
                         </div>
-                        {s < total && <div className={`flex-1 h-1 mx-2 rounded transition-colors ${current > s ? `bg-[${color}]` : 'bg-[#E5E7EB]'}`} style={current > s ? {backgroundColor: color} : {}}></div>}
+                        {s < total && <div className={`flex-1 h-1 mx-2 rounded transition-colors ${current > s ? '' : 'bg-[#E5E7EB]'}`} style={current > s ? {backgroundColor: color} : {}}></div>}
                     </React.Fragment>
                 ))}
             </div>
@@ -177,7 +174,6 @@
                     </div>
                 </div>
 
-                {/* ปุ่มติดตามสถานะ เพิ่มความชัดเจนในหน้าแรก */}
                 <div className="mb-8">
                     <button onClick={() => navigateTo('tracking')} className="w-full bg-white border border-[#E5E7EB] rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
                         <div className="flex items-center gap-4">
@@ -231,8 +227,6 @@
                 const id = await submitTicket({ type: 'feeling', category: 'ความรู้สึก', details: `รู้สึก: ${selectedFeeling}\nปัจจัย: ${selectedFactors.join(', ')}\nเพิ่มเติม: ${note}`, isAnonymous });
                 setTrackingId(id);
             };
-            
-            // โชว์หน้า Success แบบซ่อนเลข Tracking ID 
             if (trackingId) return <SuccessScreen id={trackingId} navigateTo={navigateTo} message="บันทึกความรู้สึกเรียบร้อยแล้ว" showTrackingInfo={false} />;
 
             return (
@@ -345,11 +339,11 @@
 
             const handleImageUpload = (e) => {
                 const files = Array.from(e.target.files);
-                if (files.length + formData.images.length > 3) {
+                if (files.length + (formData.images || []).length > 3) {
                     showAlert("อัปโหลดได้สูงสุด 3 รูป", "error");
                     return;
                 }
-                files.forEach(file => { const r = new FileReader(); r.onloadend = () => setFormData(p => ({ ...p, images: [...p.images, r.result] })); r.readAsDataURL(file); });
+                files.forEach(file => { const r = new FileReader(); r.onloadend = () => setFormData(p => ({ ...p, images: [...(p.images||[]), r.result] })); r.readAsDataURL(file); });
             };
 
             const handleSubmit = async () => {
@@ -393,7 +387,7 @@
                                     <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                                 </label>
                                 <div className="flex gap-2 mt-2">
-                                    {formData.images.map((img, i) => (
+                                    {(formData.images || []).map((img, i) => (
                                         <div key={i} className="relative w-16 h-16"><img src={img} className="w-full h-full object-cover rounded-lg border" /><button onClick={()=>setFormData(p=>({...p, images: p.images.filter((_,idx)=>idx!==i)}))} className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5"><i className="ph ph-x text-xs"></i></button></div>
                                     ))}
                                 </div>
@@ -427,7 +421,7 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', affected: '', location: '', details: '', isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
-            const color = "#DC2626"; // red-600
+            const color = "#DC2626"; 
 
             const categories = ['อุบัติเหตุ', 'ทะเลาะวิวาท', 'บูลลี่/คุกคาม', 'บุคคลภายนอกบุกรุก', 'สิ่งเสพติด', 'อื่นๆ'];
             const affectedTypes = ['ตัวฉันเอง', 'เพื่อน', 'ผู้อื่น', 'พบเห็นเหตุการณ์'];
@@ -498,7 +492,7 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', details: '', contactInfo: '', contactBack: false, isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
-            const color = "#16A34A"; // green-600
+            const color = "#16A34A"; 
 
             const categories = ['ความเครียด/ซึมเศร้า', 'ปัญหาครอบครัว', 'ปัญหาความสัมพันธ์/เพื่อน', 'เรื่องการเรียน', 'ต้องการคนรับฟัง', 'อื่นๆ'];
 
@@ -619,7 +613,10 @@
         const TrackingView = ({ tickets }) => {
             const [searchId, setSearchId] = useState('');
             const [result, setResult] = useState(null);
-            const handleSearch = () => setResult(tickets.find(t => t.id === searchId.toUpperCase()) || 'notfound');
+            
+            // ปกป้องการ map/find ถ้า tickets เป็น null
+            const safeTickets = tickets || [];
+            const handleSearch = () => setResult(safeTickets.find(t => t.id === searchId.toUpperCase()) || 'notfound');
 
             const isSimpleStatus = (type) => ['feeling', 'idea', 'feedback'].includes(type);
 
@@ -662,7 +659,7 @@
         };
 
         // ==========================================
-        // CUSTOM CONFIRM MODAL
+        // CUSTOM CONFIRM MODAL (สำหรับการลบ)
         // ==========================================
         const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
             if (!isOpen) return null;
@@ -703,10 +700,10 @@
                         if (json.status === 'success') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } 
                         else { showAlert('รหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง', 'error'); setPassword(''); }
                     } catch(err) {
-                        if (password === '1234') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } else { showAlert('รหัสผ่านไม่ถูกต้อง', 'error'); setPassword(''); }
+                        showAlert('รหัสผ่านไม่ถูกต้อง หรือ ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); setPassword('');
                     }
                 } else {
-                    if (password === '1234') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } else { showAlert('รหัสผ่านไม่ถูกต้อง', 'error'); setPassword(''); }
+                    showAlert('ยังไม่ได้เชื่อมต่อระบบฐานข้อมูล (URL ผิดพลาด)', 'error'); setPassword('');
                 }
                 setIsChecking(false);
             };
@@ -757,13 +754,16 @@
 
             const parseThaiDate = (dateStr) => {
                 if (!dateStr) return new Date();
-                const parts = dateStr.split(' ')[0].split('/'); 
+                const parts = String(dateStr).split(' ')[0].split('/'); 
                 if (parts.length === 3) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
                 return new Date(dateStr);
             };
 
-            const filteredTickets = tickets.filter(t => {
-                const tDate = parseThaiDate(t.date);
+            // ปกป้องการพังถ้าไม่มีข้อมูล
+            const safeTickets = tickets || [];
+
+            const filteredTickets = safeTickets.filter(t => {
+                const tDate = parseThaiDate(t?.date);
                 const now = new Date();
                 const diffDays = Math.ceil(Math.abs(now - tDate) / (1000 * 60 * 60 * 24));
                 if(timeFilter === 'today') return diffDays <= 1;
@@ -772,6 +772,7 @@
                 return true;
             });
 
+            // คำนวณเปอร์เซ็นต์หมวดหมู่ของจริง
             const catCounts = { issue: 0, idea: 0, counseling: 0, safety: 0, feedback: 0 };
             filteredTickets.forEach(t => {
                 if(t.type === 'issue') catCounts.issue++;
@@ -783,10 +784,11 @@
             const totalCategorized = catCounts.issue + catCounts.idea + catCounts.counseling + catCounts.safety + catCounts.feedback;
             const getPct = (count) => totalCategorized === 0 ? 0 : Math.round((count / totalCategorized) * 100);
 
+            // คำนวณความรู้สึกของจริง
             const feelingCounts = { excellent: 0, good: 0, neutral: 0, bad: 0, terrible: 0 };
             filteredTickets.forEach(t => {
                 if (t.type === 'feeling' && t.details) {
-                    const match = t.details.match(/รู้สึก:\s*(excellent|good|neutral|bad|terrible)/);
+                    const match = String(t.details).match(/รู้สึก:\s*(excellent|good|neutral|bad|terrible)/);
                     if (match && match[1]) feelingCounts[match[1]]++;
                 }
             });
@@ -872,7 +874,7 @@
                         </div>
                         <div className="flex-1 p-4 space-y-2">
                             <button onClick={() => setAdminTab('overview')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${adminTab === 'overview' ? 'bg-[#FFF5F6] text-[#C8102E]' : 'text-gray-600 hover:bg-gray-50'}`}><i className="ph ph-squares-four text-lg"></i> แดชบอร์ด</button>
-                            <button onClick={() => setAdminTab('tickets')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${adminTab === 'tickets' ? 'bg-[#FFF5F6] text-[#C8102E]' : 'text-gray-600 hover:bg-gray-50'}`}><i className="ph ph-list-dashes text-lg"></i> แจ้งเรื่อง ({tickets.length})</button>
+                            <button onClick={() => setAdminTab('tickets')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${adminTab === 'tickets' ? 'bg-[#FFF5F6] text-[#C8102E]' : 'text-gray-600 hover:bg-gray-50'}`}><i className="ph ph-list-dashes text-lg"></i> แจ้งเรื่อง ({safeTickets.length})</button>
                             <button onClick={() => setAdminTab('settings')} className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${adminTab === 'settings' ? 'bg-[#FFF5F6] text-[#C8102E]' : 'text-gray-600 hover:bg-gray-50'}`}><i className="ph ph-gear text-lg"></i> ตั้งค่า</button>
                         </div>
                     </div>
@@ -891,7 +893,7 @@
                         
                         <div className="bg-white border-b px-2 flex overflow-x-auto hide-scrollbar z-10 md:hidden">
                             <button onClick={() => setAdminTab('overview')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'overview' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-squares-four text-lg"></i> แดชบอร์ด</button>
-                            <button onClick={() => setAdminTab('tickets')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'tickets' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-list-dashes text-lg"></i> แจ้งเรื่อง ({tickets.length})</button>
+                            <button onClick={() => setAdminTab('tickets')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'tickets' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-list-dashes text-lg"></i> แจ้งเรื่อง ({safeTickets.length})</button>
                             <button onClick={() => setAdminTab('settings')} className={`flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap border-b-2 ${adminTab === 'settings' ? 'border-[#C8102E] text-[#C8102E]' : 'border-transparent text-gray-500'}`}><i className="ph ph-gear text-lg"></i> ตั้งค่า</button>
                         </div>
 
@@ -960,7 +962,7 @@
                             )}
                             {adminTab === 'tickets' && (
                                 <div className="space-y-3 animate-in fade-in max-w-4xl mx-auto">
-                                    {tickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการในระบบ (รอโหลดข้อมูลจาก Google Sheet)</p> : tickets.map(t => (
+                                    {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการในระบบ (หรือกำลังรอโหลดข้อมูล...)</p> : safeTickets.map(t => (
                                         <div key={t.id} onClick={() => setSelectedTicket(t)} className="bg-white p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:border-gray-300 transition-all">
                                             <div className="flex justify-between mb-2">
                                                 <span className="font-mono text-xs text-gray-500">{t.id}</span>
@@ -1016,15 +1018,8 @@
                             )}
                         </div>
                         
-                        {selectedTicket && (
-                            <TicketDetailModal 
-                                ticket={selectedTicket} 
-                                onClose={() => setSelectedTicket(null)} 
-                                onUpdateStatus={(id, s) => { updateTicketStatus(id, s); setSelectedTicket(null); }} 
-                                onDeleteClick={(id) => setConfirmDeleteId(id)} 
-                            />
-                        )}
-
+                        {selectedTicket && <TicketDetailModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} onUpdateStatus={(id, s) => { updateTicketStatus(id, s); setSelectedTicket(null); }} onDeleteClick={(id) => setConfirmDeleteId(id)} />}
+                        
                         <ConfirmModal 
                             isOpen={!!confirmDeleteId}
                             title="ยืนยันการลบข้อมูล"
@@ -1041,21 +1036,18 @@
             );
         };
 
-        // ==========================================
-        // POPUP
-        // ==========================================
         const PosterPopup = ({ settings }) => {
             const [isVisible, setIsVisible] = useState(false);
             const [hideFor7Days, setHideFor7Days] = useState(false);
 
             useEffect(() => {
-                if (settings.popupEnabled === true && settings.popupImageUrl && settings.popupImageUrl.trim() !== "") {
+                if (settings?.popupEnabled === true && settings?.popupImageUrl && settings.popupImageUrl.trim() !== "") {
                     const hiddenUntil = sessionStorage.getItem('hidePopupRef'); 
                     if (!hiddenUntil) setIsVisible(true);
                 } else {
                     setIsVisible(false);
                 }
-            }, [settings.popupEnabled, settings.popupImageUrl]);
+            }, [settings?.popupEnabled, settings?.popupImageUrl]);
 
             const handleClose = () => {
                 if (hideFor7Days) sessionStorage.setItem('hidePopupRef', 'true');
@@ -1080,24 +1072,15 @@
             );
         };
 
-        // ==========================================
-        // MAIN APP RENDER
-        // ==========================================
         function App() {
             const [currentView, setCurrentView] = useState('home');
             const [isAdminAuth, setIsAdminAuth] = useState(false);
-            
-            // รอโหลดของจริงจาก Google Sheets
             const [tickets, setTickets] = useState([]);
-            
             const [isLoading, setIsLoading] = useState(false); 
             const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: 'info', message: '' });
             
             const [settings, setSettings] = useState({ 
-                schoolName: "STUDENT COUNCIL", 
-                logoUrl: "", 
-                popupEnabled: false, 
-                popupImageUrl: "" 
+                schoolName: "STUDENT COUNCIL", logoUrl: "", popupEnabled: false, popupImageUrl: "" 
             });
 
             const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
@@ -1110,7 +1093,7 @@
                         const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getInitialData`);
                         const json = await res.json();
                         if(json.status === 'success') {
-                            if(json.tickets) setTickets(json.tickets);
+                            if(json.tickets && Array.isArray(json.tickets)) setTickets(json.tickets);
                             if(json.settings) setSettings(prev => ({...prev, ...json.settings}));
                         }
                     } catch(e) { console.error("Error fetching data:", e); }
@@ -1125,7 +1108,7 @@
                 const newId = `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
                 const newTicket = { id: newId, status: 'pending', date: new Date().toLocaleDateString('en-GB'), title: data.title || data.category, ...data };
                 
-                setTickets(prev => [newTicket, ...prev]);
+                setTickets(prev => [newTicket, ...(prev || [])]);
 
                 if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
                     try {
@@ -1134,28 +1117,22 @@
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ action: 'create', ...data, id: newId })
                         }).catch(e => console.error(e));
-                    } catch (error) { console.error(error); }
+                    } catch (error) {}
                 }
                 return newId;
             };
 
             const updateTicketStatus = (id, newStatus) => {
-                setTickets(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t));
+                setTickets(prev => (prev || []).map(t => t.id === id ? { ...t, status: newStatus } : t));
                 if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
-                    fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'updateStatus', id: id, status: newStatus })
-                    }).catch(e => console.error(e));
+                    fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'updateStatus', id: id, status: newStatus }) }).catch(e => console.error(e));
                 }
             };
 
             const deleteTicket = (id) => {
-                setTickets(prev => prev.filter(t => t.id !== id));
+                setTickets(prev => (prev || []).filter(t => t.id !== id));
                 if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
-                    fetch(GOOGLE_SCRIPT_URL, {
-                        method: 'POST',
-                        body: JSON.stringify({ action: 'delete', id: id })
-                    }).catch(e => console.error(e));
+                    fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id: id }) }).catch(e => console.error(e));
                 }
                 showAlert("ลบข้อมูลออกจากระบบแล้ว", "success");
             };
@@ -1165,7 +1142,6 @@
             return (
                 <div className="min-h-screen flex justify-center bg-gray-200">
                     <div className={`bg-[#F7F8FA] h-screen flex flex-col shadow-2xl relative overflow-hidden border-x border-gray-300 transition-all duration-300 ${isAdminAuth ? 'w-full' : 'w-full max-w-md'}`}>
-                        
                         {isLoading && <div className="absolute top-0 left-0 w-full h-1 bg-gray-200 overflow-hidden z-50"><div className="w-1/2 h-full bg-[#C8102E] animate-[slide_1.5s_ease-in-out_infinite]"></div></div>}
 
                         <CustomAlert config={alertConfig} onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })} />
@@ -1176,7 +1152,6 @@
                             <>
                                 <PosterPopup settings={settings} />
                                 <Header navigateTo={navigateTo} onAdminTrigger={() => setCurrentView('admin-login')} settings={settings} />
-                                
                                 <main className="flex-1 overflow-y-auto relative">
                                     {currentView === 'home' && <HomeView navigateTo={navigateTo} />}
                                     {currentView === 'feeling' && <FeelingView navigateTo={navigateTo} submitTicket={submitTicketData} />}
@@ -1187,7 +1162,6 @@
                                     {currentView === 'counseling' && <CounselingReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
                                     {currentView === 'tracking' && <TrackingView tickets={tickets} />}
                                 </main>
-
                                 <BottomNav currentView={currentView} navigateTo={navigateTo} />
                             </>
                         )}
@@ -1205,6 +1179,5 @@
     </script>
 </body>
 </html>
-
 
 
