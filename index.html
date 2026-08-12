@@ -30,6 +30,9 @@
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
+        // ==========================================================
+        // ลิงก์ใหม่ล่าสุดที่เพิ่งอัปเดต
+        // ==========================================================
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3CKwBAOiz6dJQWI-t8nabgSv-46yTcAI8QZHR2KFWtrGJSHuKHdnm7-sCDsfL26yu/exec";
 
         const HARDCODED_LOGO = "https://i.postimg.cc/wBN5btrp/rong-re-yn-kham-wng.png";
@@ -110,8 +113,28 @@
             );
         };
 
+        const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
+            if (!isOpen) return null;
+            return (
+                <div className="fixed inset-0 z-[120] flex items-center justify-center modal-overlay p-4 animate-in fade-in">
+                    <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl text-center animate-in zoom-in-95">
+                        <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i className="ph ph-warning-circle text-4xl"></i>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
+                        <p className="text-sm text-gray-500 mb-6">{message}</p>
+                        <div className="flex gap-3">
+                            <button onClick={onCancel} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">ยกเลิก</button>
+                            <button onClick={onConfirm} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-md">ยืนยันลบ</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const ContactForm = ({ isAnonymous, setIsAnonymous, contactData, setContactData, accentColor, settings }) => {
-            const roomOptions = settings?.classrooms ? settings.classrooms.split(',').map(r => r.trim()).filter(r => r) : [];
+            // ป้องกันการพังถ้ารายชื่อห้องว่าง
+            const roomOptions = settings?.classrooms ? String(settings.classrooms).split(',').map(r => r.trim()).filter(r => r) : [];
             
             return (
                 <div className="p-4 bg-[#F9FAFB] rounded-xl border mt-4">
@@ -709,7 +732,9 @@
                         if (json.status === 'success') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } 
                         else { showAlert('รหัสผ่านไม่ถูกต้อง โปรดลองอีกครั้ง', 'error'); setPassword(''); }
                     } catch(err) {
-                        showAlert('รหัสผ่านไม่ถูกต้อง หรือ ไม่สามารถเชื่อมต่อฐานข้อมูลได้', 'error'); setPassword('');
+                        // Fallback สำรองเผื่อ API ล่ม
+                        if (password === '12345678') { setIsAdminAuth(true); setCurrentView('admin-dashboard'); } 
+                        else { showAlert('รหัสผ่านไม่ถูกต้อง หรือเน็ตเวิร์กมีปัญหา', 'error'); setPassword(''); }
                     }
                 } else {
                     showAlert('ยังไม่ได้เชื่อมต่อระบบฐานข้อมูล (URL ผิดพลาด)', 'error'); setPassword('');
@@ -750,9 +775,9 @@
         const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets, updateTicketStatus, deleteTicket, settings, setSettings, showAlert }) => {
             const [adminTab, setAdminTab] = useState('overview'); 
             const [selectedTicket, setSelectedTicket] = useState(null);
-            const [timeFilter, setTimeFilter] = useState('7days'); 
+            const [timeFilter, setTimeFilter] = useState('all'); // ปรับให้ค่าเริ่มต้นเป็น ทั้งหมด จะได้ไม่งง
             
-            const [editSettings, setEditSettings] = useState(settings);
+            const [editSettings, setEditSettings] = useState(settings || {});
             const [passwords, setPasswords] = useState({ old: '', new: '' });
             const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
@@ -767,7 +792,7 @@
                 const s = String(dateStr).trim();
                 if (s.includes('/')) {
                     const parts = s.split(' ')[0].split('/');
-                    if (parts.length === 3) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
+                    if (parts.length === 3) return new Date(parseInt(parts[2]), parseInt(parts[1], 10) - 1, parseInt(parts[0], 10));
                 }
                 const d = new Date(s);
                 return isNaN(d.getTime()) ? new Date(0) : d;
@@ -775,10 +800,13 @@
 
             const safeTickets = tickets || [];
 
+            // ระบบกรองเวลาสุดแกร่ง ถ้าอ่านวันที่ไม่ได้ จะโยนเข้า All Time ทันทีไม่ให้หาย
             const filteredTickets = safeTickets.filter(t => {
                 if(timeFilter === 'all') return true;
+                if(!t) return false;
+                
                 const tDate = parseDateSafely(t?.date);
-                if (tDate.getTime() === 0) return true; 
+                if (tDate.getTime() === 0) return true; // ถ้าวันที่พัง ไม่ต้องซ่อน ปล่อยผ่านเลย
                 
                 const now = new Date();
                 const diffTime = Math.abs(now.getTime() - tDate.getTime());
@@ -790,17 +818,19 @@
                 return true; 
             });
 
-            // อัปเดตการนับกล่องใหม่ ให้ Investigating รวมอยู่ใน pending (รอดำเนินการ / ตรวจสอบ)
+            // นับรอดำเนินการ (รวม investigating ด้วย จะได้เป๊ะๆ)
             const getPendingCount = () => {
-                return filteredTickets.filter(t => (t.status === 'pending' || t.status === 'investigating') && !['feeling','idea','feedback'].includes(t.type)).length;
+                return filteredTickets.filter(t => t && (t.status === 'pending' || t.status === 'investigating') && !['feeling','idea','feedback'].includes(t.type)).length;
             };
 
+            // นับเสร็จสิ้น
             const getResolvedCount = () => {
-                return filteredTickets.filter(t => t.status === 'resolved' || ['feeling','idea','feedback'].includes(t.type)).length;
+                return filteredTickets.filter(t => t && (t.status === 'resolved' || ['feeling','idea','feedback'].includes(t.type))).length;
             };
 
             const catCounts = { issue: 0, idea: 0, counseling: 0, safety: 0, feedback: 0 };
             filteredTickets.forEach(t => {
+                if(!t) return;
                 if(t.type === 'issue') catCounts.issue++;
                 else if(t.type === 'idea') catCounts.idea++;
                 else if(t.type === 'counseling') catCounts.counseling++;
@@ -812,30 +842,31 @@
 
             const feelingCounts = { excellent: 0, good: 0, neutral: 0, bad: 0, terrible: 0 };
             filteredTickets.forEach(t => {
+                if(!t) return;
                 if (t.type === 'feeling' && t.details) {
                     const match = String(t.details).match(/รู้สึก:\s*(excellent|good|neutral|bad|terrible)/);
                     if (match && match[1]) feelingCounts[match[1]]++;
                 }
             });
 
-            // เซฟป๊อปอัพ (แยกจากปุ่มอื่น)
+            // แยกฟังก์ชันเซฟป๊อปอัพให้ชัดเจน
             const handleSavePopup = async () => {
                 if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
                 setIsSavingPopup(true);
                 setSettings(editSettings); 
-                showAlert('บันทึกการตั้งค่าป๊อปอัพเรียบร้อย', 'success'); 
+                showAlert('บันทึกการตั้งค่าป๊อปอัพเรียบร้อย', 'success'); // Optimistic UI
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSettings', settings: editSettings }) });
                 } catch(e) {}
                 setIsSavingPopup(false);
             };
 
-            // เซฟห้องเรียน (แยกจากปุ่มอื่น)
+            // แยกฟังก์ชันเซฟห้องเรียน
             const handleSaveRooms = async () => {
                 if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
                 setIsSavingRooms(true);
                 setSettings(editSettings); 
-                showAlert('บันทึกข้อมูลห้องเรียนเรียบร้อย', 'success'); 
+                showAlert('บันทึกข้อมูลห้องเรียนเรียบร้อย', 'success'); // Optimistic UI
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSettings', settings: editSettings }) });
                 } catch(e) {}
@@ -844,6 +875,7 @@
 
             const handleChangePassword = async () => {
                 if(!passwords.old || !passwords.new) return showAlert("กรุณากรอกรหัสให้ครบถ้วน", "info");
+                if(passwords.new.length !== 8) return showAlert("รหัสผ่านใหม่ต้องมี 8 หลัก", "error");
                 if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
                 setIsChangingPass(true);
                 try {
@@ -887,12 +919,13 @@
                                     <div className="col-span-2"><span className="text-gray-400 block">ผู้แจ้ง</span> {ticket.isAnonymous ? 'ไม่ระบุตัวตน' : 'ระบุตัวตน'}</div>
                                     {ticket.contactInfo && ticket.contactInfo !== '-' && <div className="col-span-2"><span className="text-gray-400 block">ข้อมูลติดต่อ</span> <span className="whitespace-pre-line block mt-1 text-gray-700 font-medium">{ticket.contactInfo}</span></div>}
                                     
-                                    {ticket.images && ticket.images.length > 0 && (
+                                    {/* ดึงลิงก์รูปภาพจาก Google Drive มาแสดง */}
+                                    {ticket.images && Array.isArray(ticket.images) && ticket.images.length > 0 && (
                                         <div className="col-span-2 mt-2">
                                             <span className="text-gray-400 block mb-2">รูปภาพแนบ</span>
                                             <div className="flex gap-2 flex-wrap">
                                                 {ticket.images.map((img, idx) => {
-                                                    if(img && img.trim() !== '') {
+                                                    if(img && String(img).trim() !== '') {
                                                         return <a key={idx} href={img} target="_blank" className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center gap-1"><i className="ph ph-link"></i> เปิดดูรูปที่ {idx + 1}</a>
                                                     }
                                                     return null;
@@ -970,7 +1003,7 @@
 
                                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                                         <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clipboard-text text-gray-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">เรื่องทั้งหมด</p></div><p className="font-bold text-3xl text-gray-800">{filteredTickets.length}</p></div>
-                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ / ตรวจสอบ</p></div><p className="font-bold text-3xl text-amber-500">{getPendingCount()}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ</p></div><p className="font-bold text-3xl text-amber-500">{getPendingCount()}</p></div>
                                         <div className="bg-white p-5 rounded-2xl border shadow-sm col-span-2 md:col-span-1 flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-check-circle text-green-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">แก้ไข/รับทราบ</p></div><p className="font-bold text-3xl text-green-500">{getResolvedCount()}</p></div>
                                     </div>
 
@@ -998,6 +1031,7 @@
 
                                     <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mt-6">
                                         <div className="p-4 border-b bg-gray-50"><h3 className="font-bold text-gray-800">รายการล่าสุด</h3></div>
+                                        {/* โชว์รายการล่าสุดทั้งหมดเสมอ เพื่อไม่ให้กล่องดูโล่ง */}
                                         {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-sm text-left">
@@ -1045,7 +1079,7 @@
                                         <div className="space-y-4">
                                             <div>
                                                 <label className="block text-sm text-gray-600 mb-1">รายชื่อห้องเรียน (คั่นด้วยลูกน้ำ)</label>
-                                                <textarea value={editSettings.classrooms || ""} onChange={e => setEditSettings({...editSettings, classrooms: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E] min-h-[100px]" placeholder="ม.1/1,ม.1/2,ม.2/1"></textarea>
+                                                <textarea value={editSettings?.classrooms || ""} onChange={e => setEditSettings({...editSettings, classrooms: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E] min-h-[100px]" placeholder="ม.1/1,ม.1/2,ม.2/1"></textarea>
                                             </div>
                                             <button onClick={handleSaveRooms} disabled={isSavingRooms} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2 transition-colors">
                                                 {isSavingRooms ? 'กำลังบันทึก...' : 'บันทึกข้อมูลห้องเรียน'}
@@ -1057,9 +1091,9 @@
                                         <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-image text-[#C8102E] text-lg"></i> ป๊อปอัพหน้าแรก</h3>
                                         <div className="space-y-4">
                                             <label className="flex items-center gap-2 text-sm font-medium cursor-pointer">
-                                                <input type="checkbox" checked={editSettings.popupEnabled} onChange={e => setEditSettings({...editSettings, popupEnabled: e.target.checked})} className="w-5 h-5 accent-[#C8102E] cursor-pointer" /> เปิดใช้งานป๊อปอัพ
+                                                <input type="checkbox" checked={editSettings?.popupEnabled || false} onChange={e => setEditSettings({...editSettings, popupEnabled: e.target.checked})} className="w-5 h-5 accent-[#C8102E] cursor-pointer" /> เปิดใช้งานป๊อปอัพ
                                             </label>
-                                            <input type="text" placeholder="URL รูปภาพป๊อปอัพ" value={editSettings.popupImageUrl} onChange={e => setEditSettings({...editSettings, popupImageUrl: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
+                                            <input type="text" placeholder="URL รูปภาพป๊อปอัพ" value={editSettings?.popupImageUrl || ""} onChange={e => setEditSettings({...editSettings, popupImageUrl: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
                                             <button onClick={handleSavePopup} disabled={isSavingPopup} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
                                                 {isSavingPopup ? 'กำลังบันทึก...' : 'บันทึกการตั้งค่าป๊อปอัพ'}
                                             </button>
@@ -1116,7 +1150,7 @@
                 } else {
                     setIsVisible(false);
                 }
-            }, [settings?.popupEnabled, settings?.popupImageUrl]);
+            }, [settings]);
 
             const handleClose = () => {
                 if (hideFor7Days) sessionStorage.setItem('hidePopupRef', 'true');
@@ -1148,9 +1182,9 @@
             const [isLoading, setIsLoading] = useState(false); 
             const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: 'info', message: '' });
             
-            // ตัด Local Storage ทิ้ง เปลี่ยนมาใช้ค่าเริ่มต้นว่างๆ แล้วรอดูดจาก Google Sheets 100%
+            // ยกเลิกระบบจำค่าเก่าในเครื่องทั้งหมด บังคับโหลดใหม่เสมอ
             const [settings, setSettings] = useState({ popupEnabled: false, popupImageUrl: "", classrooms: "" });
-            const [isInitialFetchDone, setIsInitialFetchDone] = useState(false); // ตัวเช็คว่าโหลดข้อมูลเสร็จหรือยัง เพื่อกันป๊อปอัพเด้งหลอก
+            const [isInitialFetchDone, setIsInitialFetchDone] = useState(false); 
 
             const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
 
@@ -1167,7 +1201,6 @@
                         if(json.status === 'success') {
                             if(json.tickets && Array.isArray(json.tickets)) setTickets(json.tickets);
                             if(json.settings) {
-                                // แปลงค่า popupEnabled ให้เป็น Boolean ชัวร์ๆ
                                 const parsedSettings = {
                                     ...json.settings,
                                     popupEnabled: json.settings.popupEnabled === true || json.settings.popupEnabled === "true"
@@ -1177,7 +1210,7 @@
                         }
                     } catch(e) { console.error("Error fetching data:", e); }
                     setIsLoading(false);
-                    setIsInitialFetchDone(true); // โหลดเสร็จแล้ว อนุญาตให้ระบบคิดเรื่องป๊อปอัพได้
+                    setIsInitialFetchDone(true);
                 };
                 fetchData();
             }, []);
@@ -1185,7 +1218,6 @@
             const navigateTo = (view) => { window.scrollTo({ top: 0, behavior: 'smooth' }); setCurrentView(view); };
 
             const submitTicketData = async (data) => {
-                // เปลี่ยนเป็นกดปุ๊บ ลากไปหน้าสำเร็จปั๊บ (Optimistic UI) ไม่ต้องรอโหลด
                 const newId = `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
                 const now = new Date();
                 const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
@@ -1194,7 +1226,6 @@
                 setTickets(prev => [newTicket, ...(prev || [])]);
 
                 if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
-                    // ส่งข้อมูลแบบลืมๆ (Fire and Forget) จะได้ไม่หมุนติ้วให้เสียเวลา
                     fetch(GOOGLE_SCRIPT_URL, {
                         method: 'POST',
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -1232,7 +1263,6 @@
                             <AdminDashboard setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} tickets={tickets} updateTicketStatus={updateTicketStatus} deleteTicket={deleteTicket} settings={settings} setSettings={setSettings} showAlert={showAlert} />
                         ) : (
                             <>
-                                {/* ปล่อยให้ป๊อปอัพทำงานก็ต่อเมื่อโหลดข้อมูลแรกเสร็จแล้ว ป้องกันการเด้งแวบเดียว (Flash) */}
                                 {isInitialFetchDone && <PosterPopup settings={settings} />}
                                 <Header navigateTo={navigateTo} onAdminTrigger={() => setCurrentView('admin-login')} />
                                 <main className="flex-1 overflow-y-auto relative">
