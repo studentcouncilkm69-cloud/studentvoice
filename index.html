@@ -31,6 +31,7 @@
         const { useState, useEffect, useRef } = React;
 
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3CKwBAOiz6dJQWI-t8nabgSv-46yTcAI8QZHR2KFWtrGJSHuKHdnm7-sCDsfL26yu/exec";
+
         const HARDCODED_LOGO = "https://i.postimg.cc/wBN5btrp/rong-re-yn-kham-wng.png";
         const HARDCODED_NAME = "STUDENT COUNCIL • KHAMMUANG SCHOOL";
 
@@ -41,7 +42,7 @@
         ];
         const FEELING_FACTORS_DATA = ['เพื่อน', 'การเรียน', 'ครู', 'กิจกรรม', 'ครอบครัว', 'สถานที่', 'อาหาร', 'ความปลอดภัย', 'งาน / การบ้าน', 'การเดินทาง', 'เรื่องส่วนตัว', 'อื่น ๆ'];
 
-        // --- COMPONENTS ---
+        // --- SHARED COMPONENTS ---
         const Header = ({ navigateTo, onAdminTrigger }) => {
             const [logoClicks, setLogoClicks] = useState(0);
             const clickTimeoutRef = useRef(null);
@@ -774,6 +775,7 @@
             const [editSettings, setEditSettings] = useState(settings || {});
             const [passwords, setPasswords] = useState({ old: '', new: '' });
             const [confirmDeleteId, setConfirmDeleteId] = useState(null);
+            const [previewImage, setPreviewImage] = useState(null);
 
             const [isSavingPopup, setIsSavingPopup] = useState(false);
             const [isSavingRooms, setIsSavingRooms] = useState(false);
@@ -890,6 +892,18 @@
                 setIsChangingPass(false); 
             };
 
+            const ImageViewer = () => {
+                if (!previewImage) return null;
+                return (
+                    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/95 p-4 animate-in fade-in" onClick={() => setPreviewImage(null)}>
+                        <button className="absolute top-4 right-4 text-white p-3 rounded-full bg-white/10 hover:bg-white/30 transition-colors backdrop-blur-md">
+                            <i className="ph ph-x text-2xl font-bold"></i>
+                        </button>
+                        <img src={previewImage} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl scale-in-center" onClick={e => e.stopPropagation()} />
+                    </div>
+                );
+            };
+
             const TicketDetailModal = ({ ticket, onClose, onUpdateStatus, onDeleteClick }) => {
                 if (!ticket) return null;
                 const isSimpleStatus = ['feeling', 'idea', 'feedback'].includes(ticket.type);
@@ -921,14 +935,16 @@
                                             <div className="flex gap-2 flex-wrap">
                                                 {ticket.images.map((img, idx) => {
                                                     if(img && String(img).trim() !== '') {
+                                                        const isDriveLink = img.includes('drive.google.com');
                                                         return (
                                                             <button 
                                                                 type="button"
                                                                 key={idx} 
-                                                                onClick={() => window.open(img.trim(), '_blank', 'noopener,noreferrer')} 
+                                                                onClick={() => isDriveLink ? window.open(img.trim(), '_blank', 'noopener,noreferrer') : setPreviewImage(img.trim())} 
                                                                 className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center gap-1 cursor-pointer transition-colors"
                                                             >
-                                                                <i className="ph ph-link"></i> เปิดดูรูปที่ {idx + 1}
+                                                                <i className={isDriveLink ? "ph ph-link" : "ph ph-image"}></i> 
+                                                                {isDriveLink ? `เปิด Drive รูปที่ ${idx + 1}` : `ดูรูปที่ ${idx + 1}`}
                                                             </button>
                                                         )
                                                     }
@@ -963,6 +979,8 @@
 
             return (
                 <div className="flex h-screen bg-[#F3F4F6] w-full absolute inset-0 z-50">
+                    <ImageViewer />
+                    
                     <div className="w-64 bg-white border-r hidden md:flex flex-col shadow-sm">
                         <div className="p-4 border-b flex items-center gap-3">
                             <img src={HARDCODED_LOGO} className="w-8 h-8 rounded-lg object-cover border" />
@@ -1127,14 +1145,7 @@
                             )}
                         </div>
                         
-                        {selectedTicket && (
-                            <TicketDetailModal 
-                                ticket={selectedTicket} 
-                                onClose={() => setSelectedTicket(null)} 
-                                onUpdateStatus={(id, s) => { updateTicketStatus(id, s); setSelectedTicket(null); }} 
-                                onDeleteClick={(id) => setConfirmDeleteId(id)} 
-                            />
-                        )}
+                        {renderTicketModal()}
 
                         <ConfirmModal 
                             isOpen={!!confirmDeleteId}
@@ -1196,8 +1207,6 @@
             const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: 'info', message: '' });
             
             const [settings, setSettings] = useState({ popupEnabled: false, popupImageUrl: "", classrooms: "" });
-            
-            // รอแอบโหลดข้อมูลเงียบๆ ไม่ต้องบังทั้งหน้าจอแล้ว
             const [isInitialFetchDone, setIsInitialFetchDone] = useState(false); 
 
             const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
@@ -1208,7 +1217,7 @@
                         setIsInitialFetchDone(true);
                         return;
                     }
-                    setIsLoading(true); // เปิดแถบแดงด้านบน
+                    setIsLoading(true);
                     try {
                         const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getInitialData&t=${new Date().getTime()}`);
                         const json = await res.json();
@@ -1223,8 +1232,8 @@
                             }
                         }
                     } catch(e) {}
-                    setIsLoading(false); // ปิดแถบแดง
-                    setIsInitialFetchDone(true); // อนุญาตให้โชว์ป๊อปอัพได้ (ถ้าแอดมินเปิดไว้)
+                    setIsLoading(false);
+                    setIsInitialFetchDone(true); 
                 };
                 fetchData();
             }, []);
@@ -1268,7 +1277,6 @@
             return (
                 <div className="min-h-screen flex justify-center bg-gray-200">
                     <div className={`bg-[#F7F8FA] h-screen flex flex-col shadow-2xl relative overflow-hidden border-x border-gray-300 transition-all duration-300 ${isAdminAuth || currentView === 'admin-login' ? 'w-full' : 'w-full max-w-md'}`}>
-                        {/* แถบโหลดสีแดงด้านบนวิ่งๆ */}
                         {isLoading && <div className="absolute top-0 left-0 w-full h-1 bg-gray-200 overflow-hidden z-50"><div className="w-1/2 h-full bg-[#C8102E] animate-[slide_1.5s_ease-in-out_infinite]"></div></div>}
 
                         <CustomAlert config={alertConfig} onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })} />
@@ -1279,7 +1287,6 @@
                             <AdminDashboard setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} tickets={tickets} updateTicketStatus={updateTicketStatus} deleteTicket={deleteTicket} settings={settings} setSettings={setSettings} showAlert={showAlert} />
                         ) : (
                             <>
-                                {/* ปล่อยให้ป๊อปอัพทำงานเมื่อเน็ตโหลดเสร็จแล้วเท่านั้น */}
                                 {isInitialFetchDone && <PosterPopup settings={settings} />}
                                 <Header navigateTo={navigateTo} onAdminTrigger={() => setCurrentView('admin-login')} />
                                 <main className="flex-1 overflow-y-auto relative">
