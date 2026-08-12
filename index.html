@@ -31,9 +31,10 @@
         const { useState, useEffect, useRef } = React;
 
         // ==========================================================
-        // ใส่ลิงก์ Web App ตรงนี้
+        // ⚠️ ใส่ลิงก์ Web App ตรงนี้
         // ==========================================================
-        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwoagjo7kQFW8iZWfZtTRYYb1_jD0lPwow3DvfE-ctz8nnFnHndnjknxlhjZLz-dElR/exec";
+        const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3CKwBAOiz6dJQWI-t8nabgSv-46yTcAI8QZHR2KFWtrGJSHuKHdnm7-sCDsfL26yu/exec
+";
 
         const FEELING_EMOJIS_DATA = [
             { emoji: '😀', label: 'ดีมาก', value: 'excellent' }, { emoji: '🙂', label: 'ดี', value: 'good' },
@@ -93,7 +94,6 @@
             );
         };
 
-        // --- Custom Alert (ป๊อปอัพแจ้งเตือนแทนการใช้ alert() แบบเก่า) ---
         const CustomAlert = ({ config, onClose }) => {
             if (!config.isOpen) return null;
             const isError = config.type === 'error';
@@ -113,7 +113,8 @@
             );
         };
 
-        const SuccessScreen = ({ id, backTo = "home", message = "ส่งข้อมูลเรียบร้อยแล้ว", navigateTo }) => {
+        // ปรับ SuccessScreen ให้รับค่า showTrackingInfo เพื่อซ่อนเลขได้
+        const SuccessScreen = ({ id, backTo = "home", message = "ส่งข้อมูลเรียบร้อยแล้ว", navigateTo, showTrackingInfo = true }) => {
             const [copied, setCopied] = useState(false);
             const handleCopy = () => {
                 if (!id) return;
@@ -128,7 +129,8 @@
                     <h2 className="text-2xl font-bold text-[#1F2937] mb-2">{message}</h2>
                     <p className="text-[#6B7280] mb-8 text-sm">ขอบคุณที่ร่วมเป็นส่วนหนึ่งในการพัฒนาโรงเรียนของเรา</p>
                     
-                    {id && (
+                    {/* จะแสดงกล่องรหัส Tracking เฉพาะตอนที่ showTrackingInfo เป็น true เท่านั้น */}
+                    {showTrackingInfo && id && (
                         <div className="bg-white border border-[#E5E7EB] rounded-2xl p-5 mb-8 shadow-sm w-full max-w-sm">
                             <div className="bg-[#FEF2F2] border border-[#FECACA] rounded-xl p-3 mb-5">
                                 <p className="font-bold text-[#DC2626] text-sm flex items-center justify-center gap-1.5"><i className="ph ph-warning-circle text-lg"></i> กรุณาคัดลอกหรือแคปหน้าจอไว้!</p>
@@ -161,13 +163,10 @@
             </div>
         );
 
-        // ==========================================
-        // USER VIEWS
-        // ==========================================
-
+        // --- USER VIEWS ---
         const HomeView = ({ navigateTo }) => (
             <div className="p-4 py-6 pb-12 animate-in fade-in duration-300">
-                <div className="bg-gradient-to-br from-[#E11D48] via-[#BE123C] to-[#881337] rounded-3xl p-6 text-white shadow-[0_8px_30px_rgb(200,16,46,0.3)] mb-8 relative overflow-hidden">
+                <div className="bg-gradient-to-br from-[#E11D48] via-[#BE123C] to-[#881337] rounded-3xl p-6 text-white shadow-[0_8px_30px_rgb(200,16,46,0.3)] mb-6 relative overflow-hidden">
                     <div className="absolute -right-6 top-0 text-white/10 rotate-12 transform scale-110 pointer-events-none"><i className="ph ph-chat-teardrop-text text-[140px]"></i></div>
                     <div className="absolute right-20 -bottom-10 text-white/10 -rotate-12 transform scale-125 pointer-events-none"><i className="ph ph-lightbulb text-[120px]"></i></div>
                     <div className="absolute left-16 -top-12 text-white/5 rotate-45 transform scale-110 pointer-events-none"><i className="ph ph-handshake text-[150px]"></i></div>
@@ -176,6 +175,22 @@
                         <h2 className="text-2xl font-bold mb-2.5">ยินดีต้อนรับสู่พื้นที่ของคุณ</h2>
                         <p className="text-[#FFE4E6] text-sm md:text-base max-w-md leading-relaxed opacity-95">ทุกเสียงของนักเรียนมีความหมาย ที่นี่คือพื้นที่ปลอดภัยสำหรับบอกความรู้สึก แสดงความคิดเห็น แจ้งปัญหา ขอความช่วยเหลือ และเสนอไอเดียใหม่ๆ</p>
                     </div>
+                </div>
+
+                {/* ปุ่มติดตามสถานะ เพิ่มความชัดเจนในหน้าแรก */}
+                <div className="mb-8">
+                    <button onClick={() => navigateTo('tracking')} className="w-full bg-white border border-[#E5E7EB] rounded-2xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
+                        <div className="flex items-center gap-4">
+                            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-700">
+                                <i className="ph ph-magnifying-glass text-2xl"></i>
+                            </div>
+                            <div className="text-left">
+                                <h3 className="font-bold text-[#1F2937] text-[15px]">ติดตามสถานะเรื่องแจ้ง</h3>
+                                <p className="text-xs text-[#6B7280]">กรอก Tracking ID เพื่อตรวจสอบ</p>
+                            </div>
+                        </div>
+                        <i className="ph ph-caret-right text-gray-400 text-xl"></i>
+                    </button>
                 </div>
 
                 <h3 className="text-lg font-bold text-[#1F2937] mb-4 flex items-center gap-2"><i className="ph ph-lightbulb text-[#C8102E] text-[20px] ph-fill"></i> คุณต้องการทำอะไรในวันนี้?</h3>
@@ -216,7 +231,9 @@
                 const id = await submitTicket({ type: 'feeling', category: 'ความรู้สึก', details: `รู้สึก: ${selectedFeeling}\nปัจจัย: ${selectedFactors.join(', ')}\nเพิ่มเติม: ${note}`, isAnonymous });
                 setTrackingId(id);
             };
-            if (trackingId) return <SuccessScreen id={trackingId} navigateTo={navigateTo} message="บันทึกความรู้สึกเรียบร้อยแล้ว" />;
+            
+            // โชว์หน้า Success แบบซ่อนเลข Tracking ID 
+            if (trackingId) return <SuccessScreen id={trackingId} navigateTo={navigateTo} message="บันทึกความรู้สึกเรียบร้อยแล้ว" showTrackingInfo={false} />;
 
             return (
                 <div className="p-4 py-6">
@@ -241,7 +258,7 @@
                                     <input type="checkbox" id="anon" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 accent-[#C8102E] rounded" />
                                     <label htmlFor="anon" className="text-sm">บันทึกแบบไม่เปิดเผยตัวตน</label>
                                 </div>
-                                <button onClick={handleSubmit} className="w-full bg-[#C8102E] text-white font-bold py-3.5 rounded-xl">บันทึกความรู้สึก</button>
+                                <button onClick={handleSubmit} className="w-full bg-[#C8102E] text-white font-bold py-3.5 rounded-xl shadow-md">บันทึกความรู้สึก</button>
                             </div>
                         )}
                     </div>
@@ -362,7 +379,6 @@
                         {step === 2 && (
                             <div className="animate-in fade-in">
                                 <h3 className="font-bold mb-4">ระบุสถานที่</h3>
-                                {/* เปลี่ยน Placeholder ตามที่ต้องการ */}
                                 <input type="text" placeholder="เช่น อาคาร 1 ห้องน้ำชาย" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-orange-600" />
                             </div>
                         )}
@@ -411,7 +427,7 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', affected: '', location: '', details: '', isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
-            const color = "#DC2626"; 
+            const color = "#DC2626"; // red-600
 
             const categories = ['อุบัติเหตุ', 'ทะเลาะวิวาท', 'บูลลี่/คุกคาม', 'บุคคลภายนอกบุกรุก', 'สิ่งเสพติด', 'อื่นๆ'];
             const affectedTypes = ['ตัวฉันเอง', 'เพื่อน', 'ผู้อื่น', 'พบเห็นเหตุการณ์'];
@@ -482,7 +498,7 @@
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', details: '', contactInfo: '', contactBack: false, isAnonymous: true });
             const [trackingId, setTrackingId] = useState(null);
-            const color = "#16A34A"; 
+            const color = "#16A34A"; // green-600
 
             const categories = ['ความเครียด/ซึมเศร้า', 'ปัญหาครอบครัว', 'ปัญหาความสัมพันธ์/เพื่อน', 'เรื่องการเรียน', 'ต้องการคนรับฟัง', 'อื่นๆ'];
 
@@ -609,13 +625,14 @@
 
             return (
                 <div className="p-4 py-6">
-                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><i className="ph ph-magnifying-glass text-[#C8102E]"></i> ติดตามสถานะ</h2>
+                    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className="flex items-center gap-1 text-[#6B7280] mb-4 text-sm font-medium hover:text-[#C8102E]"><i className="ph ph-caret-left"></i> กลับหน้าหลัก</button>
+                    <h2 className="text-xl font-bold mb-4 flex items-center gap-2"><i className="ph ph-magnifying-glass text-[#C8102E]"></i> ติดตามสถานะเรื่องแจ้ง</h2>
                     <div className="flex gap-2 mb-6">
-                        <input type="text" placeholder="Tracking ID (เช่น KM-2026-0001)" value={searchId} onChange={(e) => setSearchId(e.target.value)} className="flex-1 border p-3 rounded-xl uppercase focus:outline-none focus:border-[#C8102E] font-mono text-sm" />
-                        <button onClick={handleSearch} className="bg-gray-800 text-white px-5 rounded-xl font-medium">ค้นหา</button>
+                        <input type="text" placeholder="Tracking ID (เช่น KM-2026-0001)" value={searchId} onChange={(e) => setSearchId(e.target.value)} className="flex-1 border p-3 rounded-xl uppercase focus:outline-none focus:border-[#C8102E] font-mono text-sm shadow-sm" />
+                        <button onClick={handleSearch} className="bg-gray-900 hover:bg-black transition-colors text-white px-5 rounded-xl font-medium shadow-sm">ค้นหา</button>
                     </div>
                     
-                    {result === 'notfound' && <div className="text-center p-8 bg-white rounded-2xl border"><i className="ph ph-magnifying-glass text-4xl text-gray-300 mb-2"></i><p className="text-gray-500">ไม่พบข้อมูล หรือรหัสผิด</p></div>}
+                    {result === 'notfound' && <div className="text-center p-8 bg-white rounded-2xl border shadow-sm animate-in fade-in"><i className="ph ph-magnifying-glass text-4xl text-gray-300 mb-2"></i><p className="text-gray-500">ไม่พบข้อมูล หรือรหัสผิด</p></div>}
                     
                     {result && result !== 'notfound' && (
                         <div className="bg-white p-5 border rounded-2xl shadow-sm animate-in fade-in">
@@ -645,7 +662,7 @@
         };
 
         // ==========================================
-        // CUSTOM CONFIRM MODAL (สำหรับการกดลบ)
+        // CUSTOM CONFIRM MODAL
         // ==========================================
         const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
             if (!isOpen) return null;
@@ -733,13 +750,11 @@
             const [passwords, setPasswords] = useState({ old: '', new: '' });
             const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-            // สถานะกำลังโหลดสำหรับปุ่ม
             const [isSavingSettings, setIsSavingSettings] = useState(false);
             const [isChangingPass, setIsChangingPass] = useState(false);
 
             const handleLogout = () => { setIsAdminAuth(false); setCurrentView('home'); };
 
-            // ตัวช่วยสำหรับแปลวันที่ dd/MM/yyyy เป็น Date object ในการคำนวณ 7 วัน 30 วัน
             const parseThaiDate = (dateStr) => {
                 if (!dateStr) return new Date();
                 const parts = dateStr.split(' ')[0].split('/'); 
@@ -747,7 +762,6 @@
                 return new Date(dateStr);
             };
 
-            // กรองข้อมูล (Real Data Filter) ตามเวลาที่เลือก
             const filteredTickets = tickets.filter(t => {
                 const tDate = parseThaiDate(t.date);
                 const now = new Date();
@@ -758,18 +772,17 @@
                 return true;
             });
 
-            // คำนวณสถิติหมวดหมู่จากข้อมูลจริง
-            const catCounts = { issue: 0, idea: 0, counseling: 0, safety: 0 };
+            const catCounts = { issue: 0, idea: 0, counseling: 0, safety: 0, feedback: 0 };
             filteredTickets.forEach(t => {
                 if(t.type === 'issue') catCounts.issue++;
                 else if(t.type === 'idea') catCounts.idea++;
                 else if(t.type === 'counseling') catCounts.counseling++;
                 else if(t.type === 'safety') catCounts.safety++;
+                else if(t.type === 'feedback') catCounts.feedback++;
             });
-            const totalCategorized = catCounts.issue + catCounts.idea + catCounts.counseling + catCounts.safety;
+            const totalCategorized = catCounts.issue + catCounts.idea + catCounts.counseling + catCounts.safety + catCounts.feedback;
             const getPct = (count) => totalCategorized === 0 ? 0 : Math.round((count / totalCategorized) * 100);
 
-            // คำนวณความรู้สึกหน้ายิ้มจากข้อมูลจริง
             const feelingCounts = { excellent: 0, good: 0, neutral: 0, bad: 0, terrible: 0 };
             filteredTickets.forEach(t => {
                 if (t.type === 'feeling' && t.details) {
@@ -899,7 +912,7 @@
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="bg-white border rounded-2xl p-5 shadow-sm">
-                                            <h3 className="font-bold text-gray-800 mb-4">หมวดหมู่ที่แจ้งเข้ามา (Real Data)</h3>
+                                            <h3 className="font-bold text-gray-800 mb-4">หมวดหมู่ที่แจ้งเข้ามา</h3>
                                             <div className="space-y-4">
                                                 <div><div className="flex justify-between text-sm mb-1"><span>แจ้งซ่อม/ปัญหา</span><span className="font-bold">{getPct(catCounts.issue)}%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-orange-500 h-2 rounded-full transition-all duration-500" style={{width: `${getPct(catCounts.issue)}%`}}></div></div></div>
                                                 <div><div className="flex justify-between text-sm mb-1"><span>เสนอไอเดีย</span><span className="font-bold">{getPct(catCounts.idea)}%</span></div><div className="w-full bg-gray-100 rounded-full h-2"><div className="bg-yellow-500 h-2 rounded-full transition-all duration-500" style={{width: `${getPct(catCounts.idea)}%`}}></div></div></div>
@@ -908,7 +921,7 @@
                                             </div>
                                         </div>
                                         <div className="bg-white border rounded-2xl p-5 shadow-sm">
-                                            <h3 className="font-bold text-gray-800 mb-4">ภาพรวมความรู้สึก (Real Data)</h3>
+                                            <h3 className="font-bold text-gray-800 mb-4">ภาพรวมความรู้สึก</h3>
                                             <div className="grid grid-cols-5 gap-2">
                                                 <div className="flex flex-col items-center p-2 bg-green-50 rounded-xl"><span className="text-3xl mb-1">😀</span><span className="font-bold text-green-700">{feelingCounts.excellent}</span><span className="text-[10px] text-green-600">ดีมาก</span></div>
                                                 <div className="flex flex-col items-center p-2 bg-blue-50 rounded-xl"><span className="text-3xl mb-1">🙂</span><span className="font-bold text-blue-700">{feelingCounts.good}</span><span className="text-[10px] text-blue-600">ดี</span></div>
@@ -1003,7 +1016,6 @@
                             )}
                         </div>
                         
-                        {/* แสดง Modal รายละเอียด */}
                         {selectedTicket && (
                             <TicketDetailModal 
                                 ticket={selectedTicket} 
@@ -1013,7 +1025,6 @@
                             />
                         )}
 
-                        {/* แสดง Custom Confirm Modal สำหรับการลบ */}
                         <ConfirmModal 
                             isOpen={!!confirmDeleteId}
                             title="ยืนยันการลบข้อมูล"
@@ -1076,20 +1087,19 @@
             const [currentView, setCurrentView] = useState('home');
             const [isAdminAuth, setIsAdminAuth] = useState(false);
             
-            // ลบ Fake Data ทิ้งหมด! เริ่มต้นด้วย Array ว่าง เพื่อรอดูดของจริงจาก Google Sheets
+            // รอโหลดของจริงจาก Google Sheets
             const [tickets, setTickets] = useState([]);
             
             const [isLoading, setIsLoading] = useState(false); 
             const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: 'info', message: '' });
             
             const [settings, setSettings] = useState({ 
-                schoolName: "STUDENT COUNCIL • KHAMMUANG SCHOOL", 
+                schoolName: "STUDENT COUNCIL", 
                 logoUrl: "", 
                 popupEnabled: false, 
                 popupImageUrl: "" 
             });
 
-            // ฟังก์ชันสำหรับเรียกแจ้งเตือนแทน alert()
             const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
 
             useEffect(() => {
@@ -1158,7 +1168,6 @@
                         
                         {isLoading && <div className="absolute top-0 left-0 w-full h-1 bg-gray-200 overflow-hidden z-50"><div className="w-1/2 h-full bg-[#C8102E] animate-[slide_1.5s_ease-in-out_infinite]"></div></div>}
 
-                        {/* กล่อง Custom Alert ใช้ได้ทั่วทั้งแอป */}
                         <CustomAlert config={alertConfig} onClose={() => setAlertConfig({ ...alertConfig, isOpen: false })} />
 
                         {isAdminAuth ? (
