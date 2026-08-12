@@ -22,25 +22,6 @@
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .modal-overlay { background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
-        
-        /* ปรับปุ่มกากบาทรูปลบให้อยู่ในตำแหน่งที่กดง่าย ไม่ทับกัน */
-        .delete-img-btn {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background-color: #DC2626;
-            color: white;
-            border-radius: 50%;
-            width: 20px;
-            height: 20px;
-            display: flex;
-            align-items: center;
-            justify-center: center;
-            font-size: 12px;
-            cursor: pointer;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            z-index: 10;
-        }
     </style>
 </head>
 <body>
@@ -51,6 +32,10 @@
 
         const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby3CKwBAOiz6dJQWI-t8nabgSv-46yTcAI8QZHR2KFWtrGJSHuKHdnm7-sCDsfL26yu/exec";
 
+        // ฝังโลโก้และชื่อโรงเรียนแบบตายตัว โหลดทันทีไม่ต้องรอ
+        const HARDCODED_LOGO = "https://i.postimg.cc/wBN5btrp/rong-re-yn-kham-wng.png";
+        const HARDCODED_NAME = "STUDENT COUNCIL • KHAMMUANG SCHOOL";
+
         const FEELING_EMOJIS_DATA = [
             { emoji: '😀', label: 'ดีมาก', value: 'excellent' }, { emoji: '🙂', label: 'ดี', value: 'good' },
             { emoji: '😐', label: 'เฉย ๆ', value: 'neutral' }, { emoji: '🙁', label: 'ไม่ค่อยดี', value: 'bad' },
@@ -59,7 +44,7 @@
         const FEELING_FACTORS_DATA = ['เพื่อน', 'การเรียน', 'ครู', 'กิจกรรม', 'ครอบครัว', 'สถานที่', 'อาหาร', 'ความปลอดภัย', 'งาน / การบ้าน', 'การเดินทาง', 'เรื่องส่วนตัว', 'อื่น ๆ'];
 
         // --- SHARED COMPONENTS ---
-        const Header = ({ navigateTo, onAdminTrigger, settings }) => {
+        const Header = ({ navigateTo, onAdminTrigger }) => {
             const [logoClicks, setLogoClicks] = useState(0);
             const clickTimeoutRef = useRef(null);
 
@@ -73,11 +58,10 @@
             return (
                 <header className="bg-white border-b border-[#E5E7EB] px-4 py-3 flex justify-between items-center shadow-sm z-40">
                     <div className="flex items-center gap-3" onClick={handleLogoClick} style={{ cursor: 'pointer' }}>
-                        {settings?.logoUrl ? <img src={settings.logoUrl} alt="Logo" className="w-11 h-11 rounded-full object-cover border shadow-sm" /> 
-                        : <div className="w-11 h-11 rounded-full bg-gradient-to-br from-[#C8102E] to-[#9E0B23] flex items-center justify-center text-white font-bold text-xl shadow-md border-2 border-[#FDECEF]">KM</div>}
+                        <img src={HARDCODED_LOGO} alt="Logo" className="w-11 h-11 rounded-full object-cover border shadow-sm" /> 
                         <div className="flex flex-col justify-center">
                             <h1 className="font-bold text-[#1F2937] text-[15px] md:text-lg leading-tight mb-0.5">ระบบรับฟังเสียงนักเรียน</h1>
-                            <p className="text-[10px] md:text-xs text-[#6B7280] font-medium leading-none tracking-wide">{settings?.schoolName || 'STUDENT COUNCIL'}</p>
+                            <p className="text-[10px] md:text-xs text-[#6B7280] font-medium leading-none tracking-wide">{HARDCODED_NAME}</p>
                         </div>
                     </div>
                     <button onClick={() => navigateTo('tracking')} className="text-[#6B7280] hover:text-[#C8102E] transition-colors p-2 rounded-full hover:bg-[#FDECEF]">
@@ -120,48 +104,31 @@
                             <i className={`ph text-4xl ${isError ? 'ph-x-circle' : isSuccess ? 'ph-check-circle' : 'ph-info'}`}></i>
                         </div>
                         <h3 className="text-xl font-bold text-gray-800 mb-2">{isError ? 'เกิดข้อผิดพลาด' : isSuccess ? 'สำเร็จ' : 'แจ้งเตือน'}</h3>
-                        <p className="text-sm text-gray-500 mb-6 whitespace-pre-line">{config.message}</p>
+                        <p className="text-sm text-gray-500 mb-6">{config.message}</p>
                         <button onClick={onClose} className="w-full py-3 bg-gray-900 hover:bg-black text-white font-bold rounded-xl transition-colors shadow-md">ตกลง</button>
                     </div>
                 </div>
             );
         };
 
-        // --- COMPONENT แบบฟอร์มข้อมูลผู้ติดต่อ (อัปเกรดมี Dropdown ห้องเรียน) ---
-        const ContactForm = ({ isAnonymous, setIsAnonymous, contactData, setContactData, accentColor, classListSetting }) => {
-            // แปลงข้อความที่แอดมินตั้งค่าไว้ เป็น Array เพื่อเอาไปทำ Dropdown
-            const classesArray = classListSetting && classListSetting.trim() !== "" 
-                ? classListSetting.split(',').map(s => s.trim()) 
-                : ['ม.1/1', 'ม.1/2', 'ม.2/1', 'ม.2/2', 'ม.3/1', 'ม.3/2', 'ม.4/1', 'ม.4/2', 'ม.5/1', 'ม.5/2', 'ม.6/1', 'ม.6/2'];
-
-            return (
-                <div className="p-4 bg-[#F9FAFB] rounded-xl border mt-4">
-                    <div className="flex items-start gap-3">
-                        <input type="checkbox" id="anonToggle" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 rounded mt-0.5 cursor-pointer" style={{accentColor: accentColor}} />
-                        <label htmlFor="anonToggle" className="text-sm font-bold text-gray-700 cursor-pointer">ปกปิดชื่อและตัวตน (ไม่ระบุตัวตน)</label>
-                    </div>
-                    
-                    {/* ถ้าเอาติ๊กออก (ต้องการเปิดเผยตัวตน) ถึงจะโชว์กล่องนี้ */}
-                    {!isAnonymous && (
-                        <div className="mt-4 space-y-3 animate-in fade-in border-t pt-4">
-                            <p className="text-xs text-gray-500 font-medium mb-2"><i className="ph ph-info"></i> กรุณากรอกข้อมูลเพื่อให้สภาฯ/ครู ติดต่อกลับ</p>
-                            <input type="text" placeholder="ชื่อ - นามสกุล" value={contactData.name} onChange={e => setContactData({...contactData, name: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" style={{borderColor: contactData.name ? accentColor : ''}} />
-                            <div className="grid grid-cols-2 gap-3">
-                                {/* เปลี่ยนจากพิมพ์เอง เป็น Dropdown เลือกห้อง */}
-                                <div className="relative">
-                                    <select value={contactData.room} onChange={e => setContactData({...contactData, room: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none appearance-none text-gray-700">
-                                        <option value="" disabled>เลือกชั้น/ห้อง</option>
-                                        {classesArray.map(c => <option key={c} value={c}>{c}</option>)}
-                                    </select>
-                                    <i className="ph ph-caret-down absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"></i>
-                                </div>
-                                <input type="text" placeholder="เบอร์โทร / Line" value={contactData.phone} onChange={e => setContactData({...contactData, phone: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" />
-                            </div>
-                        </div>
-                    )}
+        // --- COMPONENT กล่องให้ติดต่อกลับ ---
+        const ContactForm = ({ isAnonymous, setIsAnonymous, contactData, setContactData, accentColor }) => (
+            <div className="p-4 bg-[#F9FAFB] rounded-xl border mt-4">
+                <div className="flex items-start gap-3">
+                    <input type="checkbox" id="anonToggle" checked={!isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 rounded mt-0.5 cursor-pointer" style={{accentColor: accentColor}} />
+                    <label htmlFor="anonToggle" className="text-sm font-bold text-gray-700 cursor-pointer">ระบุตัวตน / ให้ติดต่อกลับ</label>
                 </div>
-            );
-        };
+                {!isAnonymous && (
+                    <div className="mt-4 space-y-3 animate-in fade-in">
+                        <input type="text" placeholder="ชื่อ - นามสกุล" value={contactData.name} onChange={e => setContactData({...contactData, name: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" style={{borderColor: contactData.name ? accentColor : ''}} />
+                        <div className="grid grid-cols-2 gap-3">
+                            <input type="text" placeholder="ชั้น / ห้อง" value={contactData.room} onChange={e => setContactData({...contactData, room: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" />
+                            <input type="text" placeholder="เบอร์โทร / Line" value={contactData.phone} onChange={e => setContactData({...contactData, phone: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" />
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
 
         const SuccessScreen = ({ id, backTo = "home", message = "ส่งข้อมูลเรียบร้อยแล้ว", navigateTo, showTrackingInfo = true }) => {
             const [copied, setCopied] = useState(false);
@@ -302,7 +269,7 @@
                                 <textarea value={note} onChange={e => setNote(e.target.value)} className="w-full bg-[#F7F8FA] border rounded-xl p-3 text-sm min-h-[100px] mb-4" placeholder="เล่าเรื่องราวเพิ่มเติมให้เราฟังได้นะ..."></textarea>
                                 <div className="flex items-center gap-3 mb-6 p-3 bg-[#F9FAFB] rounded-xl border">
                                     <input type="checkbox" id="anon" checked={isAnonymous} onChange={() => setIsAnonymous(!isAnonymous)} className="w-5 h-5 accent-[#C8102E] rounded cursor-pointer" />
-                                    <label htmlFor="anon" className="text-sm cursor-pointer font-bold text-gray-700">ปกปิดชื่อและตัวตน (ไม่ระบุตัวตน)</label>
+                                    <label htmlFor="anon" className="text-sm cursor-pointer font-medium">ไม่ระบุตัวตน</label>
                                 </div>
                                 <button onClick={handleSubmit} className="w-full bg-[#C8102E] text-white font-bold py-3.5 rounded-xl shadow-md">บันทึกความรู้สึก</button>
                             </div>
@@ -312,7 +279,7 @@
             );
         };
 
-        const FeedbackView = ({ navigateTo, submitTicket, settings }) => {
+        const FeedbackView = ({ navigateTo, submitTicket }) => {
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', feedbackType: '', details: '' });
             const [isAnonymous, setIsAnonymous] = useState(true);
@@ -360,7 +327,7 @@
                             <div className="animate-in fade-in space-y-4">
                                 <h3 className="font-bold mb-3">รายละเอียด</h3>
                                 <textarea placeholder="พิมพ์ความคิดเห็นของคุณที่นี่..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-purple-600 min-h-[150px]"></textarea>
-                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} classListSetting={settings?.classList} />
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 4 && (
@@ -370,7 +337,6 @@
                                     <div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-purple-600">{formData.category}</span></div>
                                     <div><span className="text-gray-500 block">ประเภท</span><span className="font-medium">{formData.feedbackType}</span></div>
                                     <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div>
-                                    <div><span className="text-gray-500 block">การเปิดเผยตัวตน</span><span className="font-medium text-gray-800">{isAnonymous ? "ปกปิดตัวตน" : `ชื่อ: ${contactData.name||'-'}, ชั้น: ${contactData.room||'-'}, โทร: ${contactData.phone||'-'}`}</span></div>
                                 </div>
                             </div>
                         )}
@@ -384,7 +350,7 @@
             );
         };
 
-        const IssueReportView = ({ navigateTo, submitTicket, showAlert, settings }) => {
+        const IssueReportView = ({ navigateTo, submitTicket, showAlert }) => {
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', location: '', details: '', images: [] });
             const [isAnonymous, setIsAnonymous] = useState(true);
@@ -444,18 +410,15 @@
                                     <i className="ph ph-image text-3xl text-gray-400 mb-2"></i><span className="text-sm font-medium text-gray-500">คลิกเพื่ออัปโหลดรูปภาพ</span>
                                     <input type="file" accept="image/*" multiple onChange={handleImageUpload} className="hidden" />
                                 </label>
-                                <div className="flex gap-2 mt-2">
+                                <div className="flex gap-2 mt-2 flex-wrap">
                                     {(formData.images || []).map((img, i) => (
-                                        <div key={i} className="relative w-16 h-16 mr-2 mb-2">
+                                        <div key={i} className="relative w-16 h-16 group">
                                             <img src={img} className="w-full h-full object-cover rounded-lg border shadow-sm" />
-                                            {/* ปรับปุ่มกากบาทให้ดูสวยงาม ไม่เบียดทับ */}
-                                            <button onClick={()=>setFormData(p=>({...p, images: p.images.filter((_,idx)=>idx!==i)}))} className="delete-img-btn hover:bg-red-700">
-                                                <i className="ph ph-x"></i>
-                                            </button>
+                                            <button onClick={()=>setFormData(p=>({...p, images: p.images.filter((_,idx)=>idx!==i)}))} className="absolute -top-2 -right-2 bg-white text-red-500 hover:bg-red-500 hover:text-white border border-red-500 rounded-full w-5 h-5 flex items-center justify-center transition-colors shadow-sm"><i className="ph ph-x text-[10px] font-bold"></i></button>
                                         </div>
                                     ))}
                                 </div>
-                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} classListSetting={settings?.classList} />
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 4 && (
@@ -465,7 +428,6 @@
                                     <div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-orange-600">{formData.category}</span></div>
                                     <div><span className="text-gray-500 block">สถานที่</span><span className="font-medium">{formData.location || '-'}</span></div>
                                     <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div>
-                                    <div><span className="text-gray-500 block">การเปิดเผยตัวตน</span><span className="font-medium text-gray-800">{isAnonymous ? "ปกปิดตัวตน" : `ชื่อ: ${contactData.name||'-'}, ชั้น: ${contactData.room||'-'}, โทร: ${contactData.phone||'-'}`}</span></div>
                                 </div>
                             </div>
                         )}
@@ -479,7 +441,7 @@
             );
         };
 
-        const SafetyReportView = ({ navigateTo, submitTicket, settings }) => {
+        const SafetyReportView = ({ navigateTo, submitTicket }) => {
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', affected: '', location: '', details: '' });
             const [isAnonymous, setIsAnonymous] = useState(true);
@@ -528,7 +490,7 @@
                             <div className="animate-in fade-in space-y-4">
                                 <div><h3 className="font-bold mb-2">สถานที่เกิดเหตุ</h3><input type="text" value={formData.location} onChange={e => setFormData({...formData, location: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 focus:outline-none focus:border-red-600" /></div>
                                 <div><h3 className="font-bold mb-2">อธิบายเหตุการณ์</h3><textarea value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[100px] focus:outline-none focus:border-red-600"></textarea></div>
-                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} classListSetting={settings?.classList} />
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 4 && (
@@ -538,7 +500,6 @@
                                     <div><span className="text-gray-500 block">เหตุการณ์</span><span className="font-bold text-red-600">{formData.category}</span></div>
                                     <div><span className="text-gray-500 block">ผลกระทบ</span><span className="font-medium">{formData.affected}</span></div>
                                     <div><span className="text-gray-500 block">สถานที่ & รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.location} - {formData.details}</span></div>
-                                    <div><span className="text-gray-500 block">การเปิดเผยตัวตน</span><span className="font-medium text-gray-800">{isAnonymous ? "ปกปิดตัวตน" : `ชื่อ: ${contactData.name||'-'}, ชั้น: ${contactData.room||'-'}, โทร: ${contactData.phone||'-'}`}</span></div>
                                 </div>
                             </div>
                         )}
@@ -552,7 +513,7 @@
             );
         };
 
-        const CounselingReportView = ({ navigateTo, submitTicket, settings }) => {
+        const CounselingReportView = ({ navigateTo, submitTicket }) => {
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', details: '' });
             const [isAnonymous, setIsAnonymous] = useState(true);
@@ -591,7 +552,7 @@
                         {step === 2 && (
                             <div className="animate-in fade-in space-y-5">
                                 <div><h3 className="font-bold mb-2">ระบายสิ่งที่คุณรู้สึก (ไม่บังคับ)</h3><textarea placeholder="พิมพ์สิ่งที่คุณอยากบอกได้เต็มที่เลย..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[120px] focus:outline-none focus:border-green-600"></textarea></div>
-                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} classListSetting={settings?.classList} />
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 3 && (
@@ -600,7 +561,6 @@
                                 <div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3">
                                     <div><span className="text-gray-500 block">ด้านที่ปรึกษา</span><span className="font-bold text-green-600">{formData.category}</span></div>
                                     <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details || '-'}</span></div>
-                                    <div><span className="text-gray-500 block">การเปิดเผยตัวตน</span><span className="font-medium text-gray-800">{isAnonymous ? "ปกปิดตัวตน" : `ชื่อ: ${contactData.name||'-'}, ชั้น: ${contactData.room||'-'}, โทร: ${contactData.phone||'-'}`}</span></div>
                                 </div>
                             </div>
                         )}
@@ -608,13 +568,13 @@
                     <div className="flex gap-3 mt-6 pb-4">
                         {step > 1 && <button onClick={() => setStep(step - 1)} className="px-6 py-3 rounded-xl border text-gray-600 bg-white font-medium">ย้อนกลับ</button>}
                         {step < 3 ? <button onClick={() => setStep(step + 1)} disabled={step===1&&!formData.category} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl flex justify-center gap-2 items-center">ถัดไป <i className="ph ph-arrow-right"></i></button> 
-                        : <button onClick={handleSubmit} disabled={!isAnonymous && (!contactData.name || !contactData.room)} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันส่งข้อมูล</button>}
+                        : <button onClick={handleSubmit} disabled={!isAnonymous && !contactData.phone && !contactData.name} className="flex-1 bg-green-600 disabled:bg-green-300 text-white font-bold py-3 rounded-xl shadow-md">ยืนยันส่งข้อมูล</button>}
                     </div>
                 </div>
             );
         };
 
-        const IdeaView = ({ navigateTo, submitTicket, settings }) => {
+        const IdeaView = ({ navigateTo, submitTicket }) => {
             const [step, setStep] = useState(1);
             const [formData, setFormData] = useState({ category: '', details: '' });
             const [isAnonymous, setIsAnonymous] = useState(true);
@@ -653,7 +613,7 @@
                         {step === 2 && (
                             <div className="animate-in fade-in space-y-4">
                                 <div><h3 className="font-bold mb-2">อธิบายไอเดียของคุณ</h3><textarea placeholder="คุณอยากทำอะไร เพื่อปรับปรุงโรงเรียน..." value={formData.details} onChange={e => setFormData({...formData, details: e.target.value})} className="w-full bg-[#F7F8FA] border rounded-xl p-3 min-h-[150px] focus:outline-none focus:border-yellow-500"></textarea></div>
-                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} classListSetting={settings?.classList} />
+                                <ContactForm isAnonymous={isAnonymous} setIsAnonymous={setIsAnonymous} contactData={contactData} setContactData={setContactData} accentColor={color} />
                             </div>
                         )}
                         {step === 3 && (
@@ -662,7 +622,6 @@
                                 <div className="bg-[#F7F8FA] p-4 rounded-xl border text-sm space-y-3">
                                     <div><span className="text-gray-500 block">หมวดหมู่</span><span className="font-bold text-yellow-600">{formData.category}</span></div>
                                     <div><span className="text-gray-500 block">รายละเอียด</span><span className="font-medium whitespace-pre-line">{formData.details}</span></div>
-                                    <div><span className="text-gray-500 block">การเปิดเผยตัวตน</span><span className="font-medium text-gray-800">{isAnonymous ? "ปกปิดตัวตน" : `ชื่อ: ${contactData.name||'-'}, ชั้น: ${contactData.room||'-'}, โทร: ${contactData.phone||'-'}`}</span></div>
                                 </div>
                             </div>
                         )}
@@ -723,6 +682,9 @@
             );
         };
 
+        // ==========================================
+        // CUSTOM CONFIRM MODAL
+        // ==========================================
         const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
             if (!isOpen) return null;
             return (
@@ -773,24 +735,25 @@
             return (
                 <div className="min-h-screen flex items-center justify-center p-4 w-full h-full absolute inset-0 z-50 bg-[#F7F8FA]">
                     <div className="w-full max-w-sm bg-white rounded-3xl p-8 shadow-xl border text-center animate-in zoom-in-95">
-                        <div className="w-16 h-16 bg-[#C8102E] rounded-2xl mx-auto flex items-center justify-center text-white text-2xl font-bold mb-6 shadow-md">KM</div>
+                        <img src={HARDCODED_LOGO} alt="Logo" className="w-16 h-16 rounded-full mx-auto mb-6 shadow-md object-cover" />
                         <h2 className="text-2xl font-bold mb-2">เข้าสู่ระบบผู้ดูแล</h2>
                         <p className="text-gray-500 text-sm mb-6">กรุณากรอกรหัสผ่านเพื่อเข้าใช้งาน</p>
                         
                         <form onSubmit={handleLogin} className="space-y-6">
-                            <div className="relative h-14 flex items-center justify-center cursor-text bg-gray-50 rounded-2xl border" onClick={() => inputRef.current?.focus()}>
+                            <div className="relative h-14 flex items-center justify-center cursor-text bg-gray-50 rounded-2xl border px-2" onClick={() => inputRef.current?.focus()}>
                                 <input
-                                    ref={inputRef} type="password" maxLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
+                                    ref={inputRef} type="password" maxLength={8} value={password} onChange={(e) => setPassword(e.target.value)}
                                     className="absolute inset-0 w-full h-full opacity-0" style={{ zIndex: 10 }}
                                 />
-                                <div className="flex gap-4 z-0">
-                                    {[0, 1, 2, 3, 4, 5].map(i => (
-                                        <div key={i} className={`w-4 h-4 rounded-full transition-all duration-200 ${password.length > i ? 'bg-[#C8102E] scale-110 shadow-sm' : 'bg-gray-300'}`}></div>
+                                <div className="flex gap-2 z-0">
+                                    {/* ปรับเป็นจุดรหัส 8 หลักตามสั่ง */}
+                                    {[0, 1, 2, 3, 4, 5, 6, 7].map(i => (
+                                        <div key={i} className={`w-3.5 h-3.5 rounded-full transition-all duration-200 ${password.length > i ? 'bg-[#C8102E] scale-110 shadow-sm' : 'bg-gray-300'}`}></div>
                                     ))}
                                 </div>
                             </div>
                             
-                            <button type="submit" disabled={isChecking || password.length < 4} className="w-full bg-gray-900 disabled:bg-gray-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-md">
+                            <button type="submit" disabled={isChecking || password.length < 8} className="w-full bg-gray-900 disabled:bg-gray-400 text-white font-bold py-3.5 rounded-xl transition-all shadow-md">
                                 {isChecking ? 'กำลังตรวจสอบ...' : 'เข้าสู่ระบบ'}
                             </button>
                             <button type="button" onClick={() => setCurrentView('home')} className="w-full text-sm text-gray-500 py-2 hover:text-[#C8102E]">กลับหน้าหลัก</button>
@@ -803,23 +766,19 @@
         const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets, updateTicketStatus, deleteTicket, settings, setSettings, showAlert }) => {
             const [adminTab, setAdminTab] = useState('overview'); 
             const [selectedTicket, setSelectedTicket] = useState(null);
-            const [timeFilter, setTimeFilter] = useState('all'); // ปรับให้เริ่มต้นเป็น "ทั้งหมด"
+            const [timeFilter, setTimeFilter] = useState('7days'); 
             
             const [editSettings, setEditSettings] = useState(settings);
             const [passwords, setPasswords] = useState({ old: '', new: '' });
             const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
-            // แยก state ปุ่มโหลด เพื่อไม่ให้มันหมุนพร้อมกัน
-            const [isSavingSchool, setIsSavingSchool] = useState(false);
-            const [isSavingPopup, setIsSavingPopup] = useState(false);
-            const [isSavingClass, setIsSavingClass] = useState(false);
+            const [isSavingSettings, setIsSavingSettings] = useState(false);
             const [isChangingPass, setIsChangingPass] = useState(false);
 
             const handleLogout = () => { setIsAdminAuth(false); setCurrentView('home'); };
 
-            // ตัวอ่านวันที่แบบแข็งแกร่ง รองรับทั้งการดึงจากชีตและการบันทึกใหม่
-            const parseDateSafely = (dateStr) => {
-                if (!dateStr) return new Date(0);
+            const parseThaiDate = (dateStr) => {
+                if (!dateStr) return new Date(0); 
                 const str = String(dateStr);
                 if (str.includes('/')) {
                     const parts = str.split(' ')[0].split('/');
@@ -831,10 +790,8 @@
 
             const safeTickets = tickets || [];
 
-            // คำนวณวันที่ตามตัวกรอง
             const filteredTickets = safeTickets.filter(t => {
-                if(timeFilter === 'all') return true;
-                const tDate = parseDateSafely(t?.date);
+                const tDate = parseThaiDate(t?.date);
                 const now = new Date();
                 const diffTime = Math.abs(now.getTime() - tDate.getTime());
                 const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -842,10 +799,9 @@
                 if(timeFilter === 'today') return diffDays <= 1.5; 
                 if(timeFilter === '7days') return diffDays <= 7.5;
                 if(timeFilter === '30days') return diffDays <= 30.5;
-                return true;
+                return true; // All time
             });
 
-            // นับหมวดหมู่
             const catCounts = { issue: 0, idea: 0, counseling: 0, safety: 0, feedback: 0 };
             filteredTickets.forEach(t => {
                 if(t.type === 'issue') catCounts.issue++;
@@ -857,7 +813,6 @@
             const totalCategorized = catCounts.issue + catCounts.idea + catCounts.counseling + catCounts.safety + catCounts.feedback;
             const getPct = (count) => totalCategorized === 0 ? 0 : Math.round((count / totalCategorized) * 100);
 
-            // นับความรู้สึก
             const feelingCounts = { excellent: 0, good: 0, neutral: 0, bad: 0, terrible: 0 };
             filteredTickets.forEach(t => {
                 if (t.type === 'feeling' && t.details) {
@@ -866,23 +821,15 @@
                 }
             });
 
-            // บันทึกการตั้งค่า แบบรับตัวแปรว่ามาจากปุ่มไหน (school, popup, class)
-            const handleSaveSettings = async (saveType) => {
+            const handleSaveSettings = async () => {
                 if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
-                
-                if(saveType === 'school') setIsSavingSchool(true);
-                if(saveType === 'popup') setIsSavingPopup(true);
-                if(saveType === 'class') setIsSavingClass(true);
-
+                setIsSavingSettings(true);
                 setSettings(editSettings); 
-                localStorage.setItem('sv_settings', JSON.stringify(editSettings));
-                
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSettings', settings: editSettings }) });
                     showAlert('บันทึกการตั้งค่าระบบเรียบร้อยแล้ว', 'success');
                 } catch(e) { showAlert('มีปัญหาในการบันทึกข้อมูล', 'error'); }
-                
-                setIsSavingSchool(false); setIsSavingPopup(false); setIsSavingClass(false);
+                setIsSavingSettings(false);
             };
 
             const handleChangePassword = async () => {
@@ -892,10 +839,17 @@
                 try {
                     const res = await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'changePassword', oldPassword: passwords.old, newPassword: passwords.new }) });
                     const json = await res.json();
-                    if(json.status === 'success') { showAlert('เปลี่ยนรหัสผ่านสำเร็จ!', 'success'); setPasswords({ old: '', new: '' }); } 
-                    else { showAlert('รหัสผ่านเดิมไม่ถูกต้อง', 'error'); }
-                } catch(e) { showAlert('มีปัญหาในการสื่อสารกับเซิร์ฟเวอร์', 'error'); }
-                setIsChangingPass(false);
+                    if(json.status === 'success') { 
+                        showAlert('เปลี่ยนรหัสผ่านสำเร็จ!', 'success'); 
+                        setPasswords({ old: '', new: '' }); 
+                    } else { 
+                        showAlert('รหัสผ่านเดิมไม่ถูกต้อง', 'error'); 
+                    }
+                } catch(e) { 
+                    showAlert('มีปัญหาในการสื่อสารกับเซิร์ฟเวอร์', 'error'); 
+                } finally {
+                    setIsChangingPass(false); // แก้บัคปุ่มหมุนค้าง
+                }
             };
 
             const TicketDetailModal = ({ ticket, onClose, onUpdateStatus, onDeleteClick }) => {
@@ -920,26 +874,26 @@
                                 <div className="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-3 rounded-lg border">
                                     <div><span className="text-gray-400 block">วันที่</span> {ticket.date}</div>
                                     <div><span className="text-gray-400 block">หมวดหมู่</span> {ticket.category}</div>
-                                    <div className="col-span-2"><span className="text-gray-400 block">ตัวตนผู้แจ้ง</span> {ticket.isAnonymous ? 'ปกปิด (Anonymous)' : 'เปิดเผย'}</div>
-                                    {ticket.contactInfo && ticket.contactInfo !== '-' && <div className="col-span-2"><span className="text-gray-400 block">ติดต่อกลับ / ข้อมูลตัวตน</span> <span className="whitespace-pre-line block mt-1 text-gray-700 font-medium">{ticket.contactInfo}</span></div>}
+                                    <div className="col-span-2"><span className="text-gray-400 block">ผู้แจ้ง</span> {ticket.isAnonymous ? 'ไม่ระบุตัวตน' : 'ระบุตัวตน'}</div>
+                                    {ticket.contactInfo && ticket.contactInfo !== '-' && <div className="col-span-2"><span className="text-gray-400 block">ข้อมูลติดต่อ</span> <span className="whitespace-pre-line block mt-1 text-gray-700">{ticket.contactInfo}</span></div>}
+                                    
+                                    {/* ดึงลิงก์รูปภาพจาก Google Drive มาแสดงให้แอดมินคลิกได้เลย */}
+                                    {ticket.images && ticket.images.length > 0 && (
+                                        <div className="col-span-2 mt-2">
+                                            <span className="text-gray-400 block mb-2">รูปภาพแนบ</span>
+                                            <div className="flex gap-2 flex-wrap">
+                                                {ticket.images.map((img, idx) => {
+                                                    if(img && img.trim() !== '') {
+                                                        return <a key={idx} href={img} target="_blank" className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center gap-1"><i className="ph ph-image"></i> รูปที่ {idx + 1}</a>
+                                                    }
+                                                    return null;
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                                 <div><h5 className="text-sm font-bold text-gray-700 mb-1">รายละเอียด</h5><p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border whitespace-pre-line">{ticket.details}</p></div>
                                 
-                                {/* ส่วนโชว์รูปภาพในฝั่งแอดมิน */}
-                                {ticket.images && ticket.images.length > 0 && (
-                                    <div>
-                                        <h5 className="text-sm font-bold text-gray-700 mb-2">รูปภาพแนบ ({ticket.images.length} รูป)</h5>
-                                        <div className="flex gap-2 overflow-x-auto pb-2">
-                                            {ticket.images.map((img, i) => (
-                                                <a key={i} href={img} target="_blank" rel="noreferrer" className="flex-shrink-0 w-20 h-20 border rounded-lg overflow-hidden block hover:opacity-80 transition-opacity">
-                                                    <img src={img} className="w-full h-full object-cover" />
-                                                </a>
-                                            ))}
-                                        </div>
-                                        <p className="text-[10px] text-gray-500">คลิกที่รูปเพื่อดูขนาดเต็ม (เปิดจาก Google Drive)</p>
-                                    </div>
-                                )}
-
                                 {!isSimpleStatus && (
                                     <div className="border-t pt-4 mt-2">
                                         <h5 className="text-sm font-bold text-gray-700 mb-2">อัปเดตสถานะการทำงาน</h5>
@@ -965,7 +919,7 @@
                 <div className="flex h-screen bg-[#F3F4F6] w-full absolute inset-0 z-50">
                     <div className="w-64 bg-white border-r hidden md:flex flex-col shadow-sm">
                         <div className="p-4 border-b flex items-center gap-3">
-                            {settings?.logoUrl ? <img src={settings.logoUrl} className="w-8 h-8 rounded-lg object-cover border" /> : <div className="w-8 h-8 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div>}
+                            <img src={HARDCODED_LOGO} className="w-8 h-8 rounded-lg object-cover border" />
                             <span className="font-bold">Admin Panel</span>
                         </div>
                         <div className="flex-1 p-4 space-y-2">
@@ -978,14 +932,14 @@
                     <div className="flex-1 flex flex-col h-full overflow-hidden">
                         <div className="bg-white px-4 py-3 border-b flex justify-between items-center shadow-sm z-10 sticky top-0">
                             <div className="flex items-center gap-3 md:hidden">
-                                {settings?.logoUrl ? <img src={settings.logoUrl} className="w-9 h-9 rounded-lg object-cover border shadow-sm" /> : <div className="w-9 h-9 bg-[#C8102E] rounded-lg flex items-center justify-center text-white font-bold">KM</div>}
+                                <img src={HARDCODED_LOGO} className="w-9 h-9 rounded-lg object-cover border shadow-sm" />
+                                <div><h1 className="font-bold leading-tight">Admin</h1></div>
                             </div>
                             <div className="hidden md:block font-bold text-lg text-gray-800">
                                 {adminTab === 'overview' ? 'ภาพรวมระบบ' : adminTab === 'tickets' ? 'จัดการเรื่องแจ้ง' : 'ตั้งค่าระบบ'}
                             </div>
                             <div className="flex items-center gap-4">
-                                {/* เอา Super Admin ออก เหลือแค่ปุ่มออกระบบ */}
-                                <button onClick={handleLogout} className="text-sm bg-red-50 text-red-600 px-3 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-red-100 transition-colors"><i className="ph ph-sign-out"></i> ออกระบบ</button>
+                                <button onClick={handleLogout} className="text-sm bg-red-50 text-red-600 px-4 py-1.5 rounded-lg font-bold flex items-center gap-1 hover:bg-red-100 transition-colors"><i className="ph ph-sign-out"></i> ออก</button>
                             </div>
                         </div>
                         
@@ -999,10 +953,10 @@
                             {adminTab === 'overview' && (
                                 <div className="space-y-6 animate-in fade-in max-w-4xl mx-auto">
                                     <div className="flex gap-2 overflow-x-auto hide-scrollbar pb-1">
-                                        <button onClick={()=>setTimeFilter('all')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${timeFilter === 'all' ? 'bg-[#1F2937] text-white shadow-md' : 'bg-white border text-gray-600'}`}>ทั้งหมด</button>
                                         <button onClick={()=>setTimeFilter('today')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${timeFilter === 'today' ? 'bg-[#1F2937] text-white shadow-md' : 'bg-white border text-gray-600'}`}>วันนี้</button>
                                         <button onClick={()=>setTimeFilter('7days')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${timeFilter === '7days' ? 'bg-[#1F2937] text-white shadow-md' : 'bg-white border text-gray-600'}`}>7 วันที่ผ่านมา</button>
                                         <button onClick={()=>setTimeFilter('30days')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${timeFilter === '30days' ? 'bg-[#1F2937] text-white shadow-md' : 'bg-white border text-gray-600'}`}>30 วันที่ผ่านมา</button>
+                                        <button onClick={()=>setTimeFilter('all')} className={`px-4 py-1.5 rounded-full text-sm font-medium transition-colors whitespace-nowrap ${timeFilter === 'all' ? 'bg-[#1F2937] text-white shadow-md' : 'bg-white border text-gray-600'}`}>ทั้งหมด</button>
                                     </div>
 
                                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -1035,7 +989,6 @@
 
                                     <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mt-6">
                                         <div className="p-4 border-b bg-gray-50"><h3 className="font-bold text-gray-800">รายการล่าสุด</h3></div>
-                                        {/* รายการล่าสุด ให้โชว์ข้อมูลของจริงทั้งหมด ไม่สน Time Filter */}
                                         {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-sm text-left">
@@ -1062,7 +1015,7 @@
                             )}
                             {adminTab === 'tickets' && (
                                 <div className="space-y-3 animate-in fade-in max-w-4xl mx-auto">
-                                    {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการในระบบ</p> : safeTickets.map(t => (
+                                    {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการในระบบ (หรือกำลังรอโหลดข้อมูล...)</p> : safeTickets.map(t => (
                                         <div key={t.id} onClick={() => setSelectedTicket(t)} className="bg-white p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:border-gray-300 transition-all">
                                             <div className="flex justify-between mb-2">
                                                 <span className="font-mono text-xs text-gray-500">{t.id}</span>
@@ -1078,50 +1031,26 @@
                             )}
                             {adminTab === 'settings' && (
                                 <div className="space-y-4 animate-in fade-in max-w-4xl mx-auto">
+                                    {/* ตัดกล่องตั้งค่าโลโก้ออกไปแล้ว เพราะฝังถาวรแล้ว */}
+                                    
                                     <div className="bg-white p-5 rounded-2xl border shadow-sm">
-                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-school text-[#C8102E] text-lg"></i> ข้อมูลและหน้าตาแอป</h3>
+                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-image text-[#C8102E] text-lg"></i> ป๊อปอัพหน้าแรก</h3>
                                         <div className="space-y-4">
-                                            <div><label className="block text-sm text-gray-600 mb-1">ชื่อโรงเรียน</label>
-                                                <input type="text" value={editSettings.schoolName || ''} onChange={e => setEditSettings({...editSettings, schoolName: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
-                                            </div>
-                                            <div><label className="block text-sm text-gray-600 mb-1">ลิงก์โลโก้ (URL)</label>
-                                                <input type="text" value={editSettings.logoUrl || ''} onChange={e => setEditSettings({...editSettings, logoUrl: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
-                                            </div>
-                                            <button onClick={() => handleSaveSettings('school')} disabled={isSavingSchool} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold mt-2 transition-colors">
-                                                {isSavingSchool ? 'กำลังบันทึกข้อมูล...' : 'บันทึกข้อมูลโรงเรียน'}
+                                            <label className="flex items-center gap-2 text-sm font-medium">
+                                                <input type="checkbox" checked={editSettings.popupEnabled} onChange={e => setEditSettings({...editSettings, popupEnabled: e.target.checked})} className="w-5 h-5 accent-[#C8102E]" /> เปิดใช้งานป๊อปอัพ
+                                            </label>
+                                            <input type="text" placeholder="URL รูปภาพป๊อปอัพ" value={editSettings.popupImageUrl} onChange={e => setEditSettings({...editSettings, popupImageUrl: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
+                                            <button onClick={handleSaveSettings} disabled={isSavingSettings} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
+                                                {isSavingSettings ? 'กำลังบันทึกข้อมูล...' : 'บันทึกการตั้งค่าป๊อปอัพ'}
                                             </button>
                                         </div>
                                     </div>
                                     
                                     <div className="bg-white p-5 rounded-2xl border shadow-sm">
-                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-list-dashes text-[#C8102E] text-lg"></i> ตั้งค่าชั้น/ห้องเรียน (Dropdown)</h3>
-                                        <div className="space-y-4">
-                                            <p className="text-xs text-gray-500">พิมพ์รายชื่อห้องที่ต้องการให้เด็กเลือก โดยคั่นด้วยเครื่องหมายลูกน้ำ (,) เช่น ม.1/1,ม.1/2</p>
-                                            <textarea value={editSettings.classList || ''} onChange={e => setEditSettings({...editSettings, classList: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E] min-h-[100px]"></textarea>
-                                            <button onClick={() => handleSaveSettings('class')} disabled={isSavingClass} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
-                                                {isSavingClass ? 'กำลังบันทึกข้อมูล...' : 'บันทึกรายชื่อห้องเรียน'}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white p-5 rounded-2xl border shadow-sm">
-                                        <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-image text-[#C8102E] text-lg"></i> ป๊อปอัพหน้าแรก</h3>
-                                        <div className="space-y-4">
-                                            <label className="flex items-center gap-2 text-sm font-medium">
-                                                <input type="checkbox" checked={editSettings.popupEnabled || false} onChange={e => setEditSettings({...editSettings, popupEnabled: e.target.checked})} className="w-5 h-5 accent-[#C8102E]" /> เปิดใช้งานป๊อปอัพ
-                                            </label>
-                                            <input type="text" placeholder="URL รูปภาพป๊อปอัพ" value={editSettings.popupImageUrl || ''} onChange={e => setEditSettings({...editSettings, popupImageUrl: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-[#C8102E]" />
-                                            <button onClick={() => handleSaveSettings('popup')} disabled={isSavingPopup} className="bg-gray-900 disabled:bg-gray-400 hover:bg-black text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
-                                                {isSavingPopup ? 'กำลังบันทึกข้อมูล...' : 'บันทึกการตั้งค่าป๊อปอัพ'}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-white p-5 rounded-2xl border shadow-sm">
                                         <h3 className="font-bold text-gray-800 mb-4 border-b pb-3 flex items-center gap-2"><i className="ph ph-lock-key text-amber-600 text-lg"></i> เปลี่ยนรหัสผ่านแอดมิน</h3>
                                         <div className="space-y-4">
                                             <input type="password" placeholder="รหัสผ่านปัจจุบัน" value={passwords.old} onChange={e=>setPasswords({...passwords, old: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
-                                            <input type="password" placeholder="รหัสผ่านใหม่" value={passwords.new} onChange={e=>setPasswords({...passwords, new: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
+                                            <input type="password" placeholder="รหัสผ่านใหม่ (8 หลัก)" value={passwords.new} onChange={e=>setPasswords({...passwords, new: e.target.value})} className="w-full border p-3 rounded-xl text-sm bg-gray-50 focus:outline-none focus:border-amber-600" />
                                             <button onClick={handleChangePassword} disabled={isChangingPass} className="bg-amber-600 disabled:bg-amber-300 hover:bg-amber-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold transition-colors">
                                                 {isChangingPass ? 'กำลังเปลี่ยนรหัสผ่าน...' : 'เปลี่ยนรหัสผ่าน'}
                                             </button>
@@ -1156,6 +1085,9 @@
             );
         };
 
+        // ==========================================
+        // POPUP
+        // ==========================================
         const PosterPopup = ({ settings }) => {
             const [isVisible, setIsVisible] = useState(false);
             const [hideFor7Days, setHideFor7Days] = useState(false);
@@ -1192,6 +1124,9 @@
             );
         };
 
+        // ==========================================
+        // MAIN APP RENDER
+        // ==========================================
         function App() {
             const [currentView, setCurrentView] = useState('home');
             const [isAdminAuth, setIsAdminAuth] = useState(false);
@@ -1201,7 +1136,7 @@
             
             const [settings, setSettings] = useState(() => {
                 const saved = localStorage.getItem('sv_settings');
-                return saved ? JSON.parse(saved) : { schoolName: "STUDENT COUNCIL", logoUrl: "", popupEnabled: false, popupImageUrl: "", classList: "" };
+                return saved ? JSON.parse(saved) : { popupEnabled: false, popupImageUrl: "" };
             });
 
             const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
@@ -1229,6 +1164,7 @@
             const navigateTo = (view) => { window.scrollTo({ top: 0, behavior: 'smooth' }); setCurrentView(view); };
 
             const submitTicketData = async (data) => {
+                setIsLoading(true);
                 const newId = `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
                 const newTicket = { id: newId, status: 'pending', date: new Date().toLocaleDateString('en-GB'), title: data.title || data.category, ...data };
                 
@@ -1236,13 +1172,14 @@
 
                 if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
                     try {
-                        fetch(GOOGLE_SCRIPT_URL, {
+                        await fetch(GOOGLE_SCRIPT_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                             body: JSON.stringify({ action: 'create', ...data, id: newId })
-                        }).catch(e => console.error(e));
-                    } catch (error) {}
+                        });
+                    } catch (error) { console.error(error); }
                 }
+                setIsLoading(false);
                 return newId;
             };
 
@@ -1279,11 +1216,11 @@
                                 <main className="flex-1 overflow-y-auto relative">
                                     {currentView === 'home' && <HomeView navigateTo={navigateTo} />}
                                     {currentView === 'feeling' && <FeelingView navigateTo={navigateTo} submitTicket={submitTicketData} />}
-                                    {currentView === 'feedback' && <FeedbackView navigateTo={navigateTo} submitTicket={submitTicketData} settings={settings} />}
-                                    {currentView === 'idea' && <IdeaView navigateTo={navigateTo} submitTicket={submitTicketData} settings={settings} />}
-                                    {currentView === 'issue' && <IssueReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} settings={settings} />}
-                                    {currentView === 'safety' && <SafetyReportView navigateTo={navigateTo} submitTicket={submitTicketData} settings={settings} />}
-                                    {currentView === 'counseling' && <CounselingReportView navigateTo={navigateTo} submitTicket={submitTicketData} settings={settings} />}
+                                    {currentView === 'feedback' && <FeedbackView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                                    {currentView === 'idea' && <IdeaView navigateTo={navigateTo} submitTicket={submitTicketData} />}
+                                    {currentView === 'issue' && <IssueReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
+                                    {currentView === 'safety' && <SafetyReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
+                                    {currentView === 'counseling' && <CounselingReportView navigateTo={navigateTo} submitTicket={submitTicketData} showAlert={showAlert} />}
                                     {currentView === 'tracking' && <TrackingView tickets={tickets} navigateTo={navigateTo} />}
                                 </main>
                                 <BottomNav currentView={currentView} navigateTo={navigateTo} />
@@ -1303,5 +1240,6 @@
     </script>
 </body>
 </html>
+
 
 
