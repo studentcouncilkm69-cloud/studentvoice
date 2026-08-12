@@ -110,28 +110,7 @@
             );
         };
 
-        const ConfirmModal = ({ isOpen, title, message, onConfirm, onCancel }) => {
-            if (!isOpen) return null;
-            return (
-                <div className="fixed inset-0 z-[120] flex items-center justify-center modal-overlay p-4 animate-in fade-in">
-                    <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl text-center animate-in zoom-in-95">
-                        <div className="w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <i className="ph ph-warning-circle text-4xl"></i>
-                        </div>
-                        <h3 className="text-xl font-bold text-gray-800 mb-2">{title}</h3>
-                        <p className="text-sm text-gray-500 mb-6">{message}</p>
-                        <div className="flex gap-3">
-                            <button onClick={onCancel} className="flex-1 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors">ยกเลิก</button>
-                            <button onClick={onConfirm} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-colors shadow-md">ยืนยันลบ</button>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- COMPONENT กล่องให้ติดต่อกลับ (ใช้ Dropdown สำหรับห้องเรียน) ---
         const ContactForm = ({ isAnonymous, setIsAnonymous, contactData, setContactData, accentColor, settings }) => {
-            // ดึงรายชื่อห้องจาก Setting ที่แอดมินตั้งไว้
             const roomOptions = settings?.classrooms ? settings.classrooms.split(',').map(r => r.trim()).filter(r => r) : [];
             
             return (
@@ -144,7 +123,6 @@
                         <div className="mt-4 space-y-3 animate-in fade-in">
                             <input type="text" placeholder="ชื่อ - นามสกุล" value={contactData.name} onChange={e => setContactData({...contactData, name: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none" style={{borderColor: contactData.name ? accentColor : ''}} />
                             <div className="grid grid-cols-2 gap-3">
-                                {/* ใช้ Select แทน Input ธรรมดา */}
                                 <select value={contactData.room} onChange={e => setContactData({...contactData, room: e.target.value})} className="w-full bg-white border rounded-lg p-3 text-sm focus:outline-none text-gray-700">
                                     <option value="">เลือกชั้น/ห้อง...</option>
                                     {roomOptions.map((room, idx) => (
@@ -784,16 +762,13 @@
 
             const handleLogout = () => { setIsAdminAuth(false); setCurrentView('home'); };
 
-            // แปลงวันที่แก้บัคให้แม่นยำ ไม่สนว่าจะส่งมาเป็น Wed หรือ dd/MM/yyyy
             const parseDateSafely = (dateStr) => {
                 if (!dateStr) return new Date(0);
                 const s = String(dateStr).trim();
-                // ถ้าเป็นรูปแบบ DD/MM/YYYY
                 if (s.includes('/')) {
                     const parts = s.split(' ')[0].split('/');
                     if (parts.length === 3) return new Date(parts[2], parseInt(parts[1]) - 1, parts[0]);
                 }
-                // ถ้าเป็นรูปแบบอื่นให้ลอง Parse ตรงๆ
                 const d = new Date(s);
                 return isNaN(d.getTime()) ? new Date(0) : d;
             };
@@ -803,7 +778,7 @@
             const filteredTickets = safeTickets.filter(t => {
                 if(timeFilter === 'all') return true;
                 const tDate = parseDateSafely(t?.date);
-                if (tDate.getTime() === 0) return true; // ถ้าวันที่อ่านไม่ได้ โยนเข้าทั้งหมดเลยจะได้ไม่หาย
+                if (tDate.getTime() === 0) return true; 
                 
                 const now = new Date();
                 const diffTime = Math.abs(now.getTime() - tDate.getTime());
@@ -814,6 +789,15 @@
                 if(timeFilter === '30days') return diffDays <= 30.5;
                 return true; 
             });
+
+            // อัปเดตการนับกล่องใหม่ ให้ Investigating รวมอยู่ใน pending (รอดำเนินการ / ตรวจสอบ)
+            const getPendingCount = () => {
+                return filteredTickets.filter(t => (t.status === 'pending' || t.status === 'investigating') && !['feeling','idea','feedback'].includes(t.type)).length;
+            };
+
+            const getResolvedCount = () => {
+                return filteredTickets.filter(t => t.status === 'resolved' || ['feeling','idea','feedback'].includes(t.type)).length;
+            };
 
             const catCounts = { issue: 0, idea: 0, counseling: 0, safety: 0, feedback: 0 };
             filteredTickets.forEach(t => {
@@ -834,26 +818,24 @@
                 }
             });
 
-            // เซฟป๊อปอัพ
+            // เซฟป๊อปอัพ (แยกจากปุ่มอื่น)
             const handleSavePopup = async () => {
                 if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
                 setIsSavingPopup(true);
                 setSettings(editSettings); 
-                localStorage.setItem('sv_settings', JSON.stringify(editSettings));
-                showAlert('บันทึกการตั้งค่าป๊อปอัพเรียบร้อย', 'success'); // Optimistic UI
+                showAlert('บันทึกการตั้งค่าป๊อปอัพเรียบร้อย', 'success'); 
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSettings', settings: editSettings }) });
                 } catch(e) {}
                 setIsSavingPopup(false);
             };
 
-            // เซฟห้องเรียน
+            // เซฟห้องเรียน (แยกจากปุ่มอื่น)
             const handleSaveRooms = async () => {
                 if(!GOOGLE_SCRIPT_URL) return showAlert("ยังไม่ได้เชื่อมต่อ Google Sheets", "error");
                 setIsSavingRooms(true);
                 setSettings(editSettings); 
-                localStorage.setItem('sv_settings', JSON.stringify(editSettings));
-                showAlert('บันทึกข้อมูลห้องเรียนเรียบร้อย', 'success'); // Optimistic UI
+                showAlert('บันทึกข้อมูลห้องเรียนเรียบร้อย', 'success'); 
                 try {
                     await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', body: JSON.stringify({ action: 'saveSettings', settings: editSettings }) });
                 } catch(e) {}
@@ -905,7 +887,6 @@
                                     <div className="col-span-2"><span className="text-gray-400 block">ผู้แจ้ง</span> {ticket.isAnonymous ? 'ไม่ระบุตัวตน' : 'ระบุตัวตน'}</div>
                                     {ticket.contactInfo && ticket.contactInfo !== '-' && <div className="col-span-2"><span className="text-gray-400 block">ข้อมูลติดต่อ</span> <span className="whitespace-pre-line block mt-1 text-gray-700 font-medium">{ticket.contactInfo}</span></div>}
                                     
-                                    {/* ดึงลิงก์รูปภาพจาก Google Drive มาแสดง */}
                                     {ticket.images && ticket.images.length > 0 && (
                                         <div className="col-span-2 mt-2">
                                             <span className="text-gray-400 block mb-2">รูปภาพแนบ</span>
@@ -989,8 +970,8 @@
 
                                     <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                                         <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clipboard-text text-gray-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">เรื่องทั้งหมด</p></div><p className="font-bold text-3xl text-gray-800">{filteredTickets.length}</p></div>
-                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ</p></div><p className="font-bold text-3xl text-amber-500">{filteredTickets.filter(t=>t.status==='pending' && !['feeling','idea','feedback'].includes(t.type)).length}</p></div>
-                                        <div className="bg-white p-5 rounded-2xl border shadow-sm col-span-2 md:col-span-1 flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-check-circle text-green-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">แก้ไข/รับทราบ</p></div><p className="font-bold text-3xl text-green-500">{filteredTickets.filter(t=>t.status==='resolved' || ['feeling','idea','feedback'].includes(t.type)).length}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border shadow-sm flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-clock text-amber-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">รอดำเนินการ / ตรวจสอบ</p></div><p className="font-bold text-3xl text-amber-500">{getPendingCount()}</p></div>
+                                        <div className="bg-white p-5 rounded-2xl border shadow-sm col-span-2 md:col-span-1 flex flex-col justify-center"><div className="flex items-center gap-2 mb-2"><i className="ph ph-check-circle text-green-400 text-lg"></i><p className="text-sm text-gray-500 font-medium">แก้ไข/รับทราบ</p></div><p className="font-bold text-3xl text-green-500">{getResolvedCount()}</p></div>
                                     </div>
 
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1017,7 +998,6 @@
 
                                     <div className="bg-white border rounded-2xl shadow-sm overflow-hidden mt-6">
                                         <div className="p-4 border-b bg-gray-50"><h3 className="font-bold text-gray-800">รายการล่าสุด</h3></div>
-                                        {/* โชว์รายการล่าสุดทั้งหมดเสมอ เพื่อไม่ให้กล่องดูโล่ง */}
                                         {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-8">ยังไม่มีรายการ</p> : (
                                             <div className="overflow-x-auto">
                                                 <table className="w-full text-sm text-left">
@@ -1044,7 +1024,7 @@
                             )}
                             {adminTab === 'tickets' && (
                                 <div className="space-y-3 animate-in fade-in max-w-4xl mx-auto">
-                                    {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการในระบบ (หรือกำลังรอโหลดข้อมูล...)</p> : safeTickets.map(t => (
+                                    {safeTickets.length === 0 ? <p className="text-center text-gray-500 p-6">ยังไม่มีรายการในระบบ</p> : safeTickets.map(t => (
                                         <div key={t.id} onClick={() => setSelectedTicket(t)} className="bg-white p-4 rounded-xl border shadow-sm cursor-pointer hover:shadow-md hover:border-gray-300 transition-all">
                                             <div className="flex justify-between mb-2">
                                                 <span className="font-mono text-xs text-gray-500">{t.id}</span>
@@ -1125,9 +1105,6 @@
             );
         };
 
-        // ==========================================
-        // POPUP
-        // ==========================================
         const PosterPopup = ({ settings }) => {
             const [isVisible, setIsVisible] = useState(false);
             const [hideFor7Days, setHideFor7Days] = useState(false);
@@ -1164,9 +1141,6 @@
             );
         };
 
-        // ==========================================
-        // MAIN APP RENDER
-        // ==========================================
         function App() {
             const [currentView, setCurrentView] = useState('home');
             const [isAdminAuth, setIsAdminAuth] = useState(false);
@@ -1174,16 +1148,18 @@
             const [isLoading, setIsLoading] = useState(false); 
             const [alertConfig, setAlertConfig] = useState({ isOpen: false, type: 'info', message: '' });
             
-            const [settings, setSettings] = useState(() => {
-                const saved = localStorage.getItem('sv_settings');
-                return saved ? JSON.parse(saved) : { popupEnabled: false, popupImageUrl: "", classrooms: "ม.1/1,ม.1/2,ม.2/1" };
-            });
+            // ตัด Local Storage ทิ้ง เปลี่ยนมาใช้ค่าเริ่มต้นว่างๆ แล้วรอดูดจาก Google Sheets 100%
+            const [settings, setSettings] = useState({ popupEnabled: false, popupImageUrl: "", classrooms: "" });
+            const [isInitialFetchDone, setIsInitialFetchDone] = useState(false); // ตัวเช็คว่าโหลดข้อมูลเสร็จหรือยัง เพื่อกันป๊อปอัพเด้งหลอก
 
             const showAlert = (message, type = 'info') => setAlertConfig({ isOpen: true, type, message });
 
             useEffect(() => {
                 const fetchData = async () => {
-                    if(!GOOGLE_SCRIPT_URL || !GOOGLE_SCRIPT_URL.startsWith("http")) return;
+                    if(!GOOGLE_SCRIPT_URL || !GOOGLE_SCRIPT_URL.startsWith("http")) {
+                        setIsInitialFetchDone(true);
+                        return;
+                    }
                     setIsLoading(true);
                     try {
                         const res = await fetch(`${GOOGLE_SCRIPT_URL}?action=getInitialData`);
@@ -1191,12 +1167,17 @@
                         if(json.status === 'success') {
                             if(json.tickets && Array.isArray(json.tickets)) setTickets(json.tickets);
                             if(json.settings) {
-                                setSettings(prev => ({...prev, ...json.settings}));
-                                localStorage.setItem('sv_settings', JSON.stringify(json.settings));
+                                // แปลงค่า popupEnabled ให้เป็น Boolean ชัวร์ๆ
+                                const parsedSettings = {
+                                    ...json.settings,
+                                    popupEnabled: json.settings.popupEnabled === true || json.settings.popupEnabled === "true"
+                                };
+                                setSettings(parsedSettings);
                             }
                         }
                     } catch(e) { console.error("Error fetching data:", e); }
                     setIsLoading(false);
+                    setIsInitialFetchDone(true); // โหลดเสร็จแล้ว อนุญาตให้ระบบคิดเรื่องป๊อปอัพได้
                 };
                 fetchData();
             }, []);
@@ -1204,24 +1185,21 @@
             const navigateTo = (view) => { window.scrollTo({ top: 0, behavior: 'smooth' }); setCurrentView(view); };
 
             const submitTicketData = async (data) => {
+                // เปลี่ยนเป็นกดปุ๊บ ลากไปหน้าสำเร็จปั๊บ (Optimistic UI) ไม่ต้องรอโหลด
                 const newId = `KM-2026-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-                // ใช้รูปแบบวันที่ DD/MM/YYYY ให้ตรงกับฝั่งแอดมิน เพื่อความเสถียร
                 const now = new Date();
                 const formattedDate = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth() + 1).padStart(2, '0')}/${now.getFullYear()}`;
-                
                 const newTicket = { id: newId, status: 'pending', date: formattedDate, title: data.title || data.category, ...data };
                 
                 setTickets(prev => [newTicket, ...(prev || [])]);
 
                 if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== "") {
-                    try {
-                        // ปล่อยให้มัน fetch เงียบๆ หลังบ้านไป ไม่ต้องใช้ await เพื่อความไว (Optimistic UI)
-                        fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                            body: JSON.stringify({ action: 'create', ...data, id: newId })
-                        }).catch(e => console.error(e));
-                    } catch (error) {}
+                    // ส่งข้อมูลแบบลืมๆ (Fire and Forget) จะได้ไม่หมุนติ้วให้เสียเวลา
+                    fetch(GOOGLE_SCRIPT_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify({ action: 'create', ...data, id: newId })
+                    }).catch(e => console.error(e));
                 }
                 return newId;
             };
@@ -1254,7 +1232,8 @@
                             <AdminDashboard setCurrentView={setCurrentView} setIsAdminAuth={setIsAdminAuth} tickets={tickets} updateTicketStatus={updateTicketStatus} deleteTicket={deleteTicket} settings={settings} setSettings={setSettings} showAlert={showAlert} />
                         ) : (
                             <>
-                                <PosterPopup settings={settings} />
+                                {/* ปล่อยให้ป๊อปอัพทำงานก็ต่อเมื่อโหลดข้อมูลแรกเสร็จแล้ว ป้องกันการเด้งแวบเดียว (Flash) */}
+                                {isInitialFetchDone && <PosterPopup settings={settings} />}
                                 <Header navigateTo={navigateTo} onAdminTrigger={() => setCurrentView('admin-login')} />
                                 <main className="flex-1 overflow-y-auto relative">
                                     {currentView === 'home' && <HomeView navigateTo={navigateTo} />}
