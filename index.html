@@ -766,6 +766,79 @@
             );
         };
 
+        const TicketDetailModal = ({ ticket, onClose, onUpdateStatus, onDeleteClick }) => {
+            if (!ticket) return null;
+            const isSimpleStatus = ['feeling', 'idea', 'feedback'].includes(ticket.type);
+
+            return (
+                <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in zoom-in-95">
+                        <div className="sticky top-0 bg-white border-b px-5 py-4 flex justify-between items-center z-10">
+                            <h3 className="font-bold text-lg">จัดการเรื่องแจ้ง</h3>
+                            <button type="button" onClick={onClose} className="p-1 bg-gray-100 rounded-full hover:bg-gray-200"><i className="ph ph-x text-lg"></i></button>
+                        </div>
+                        
+                        <div className="p-5 space-y-4">
+                            <div className="flex justify-between items-start">
+                                <div><p className="text-xs text-gray-500 mb-1">ID: <span className="font-mono">{ticket?.id}</span></p><h4 className="font-bold text-gray-800">{ticket?.title}</h4></div>
+                                <span className={`px-2 py-1 rounded text-[10px] font-bold ${ticket?.status === 'resolved' || isSimpleStatus ? 'bg-green-100 text-green-700' : ticket?.status === 'investigating' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
+                                    {isSimpleStatus ? 'รับทราบแล้ว' : ticket?.status === 'resolved' ? 'เสร็จสิ้น' : ticket?.status === 'investigating' ? 'ตรวจสอบ' : 'รอดำเนินการ'}
+                                </span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-3 rounded-lg border">
+                                <div><span className="text-gray-400 block">วันที่</span> <span className="font-medium text-gray-800">{ticket?.date}</span></div>
+                                <div><span className="text-gray-400 block">หมวดหมู่</span> {ticket?.category}</div>
+                                <div className="col-span-2"><span className="text-gray-400 block">ผู้แจ้ง</span> {ticket?.isAnonymous ? 'ไม่ระบุตัวตน' : 'ระบุตัวตน'}</div>
+                                {ticket?.contactInfo && ticket.contactInfo !== '-' && <div className="col-span-2"><span className="text-gray-400 block">ข้อมูลติดต่อ</span> <span className="whitespace-pre-line block mt-1 text-gray-700 font-medium">{ticket.contactInfo}</span></div>}
+                                
+                                {ticket?.images && Array.isArray(ticket.images) && ticket.images.length > 0 && (
+                                    <div className="col-span-2 mt-2">
+                                        <span className="text-gray-400 block mb-2">รูปภาพแนบ</span>
+                                        <div className="flex gap-2 flex-wrap">
+                                            {ticket.images.map((img, idx) => {
+                                                if(img && String(img).trim() !== '') {
+                                                    const isDriveLink = String(img).includes('drive.google.com');
+                                                    return (
+                                                        <button 
+                                                            type="button"
+                                                            key={idx} 
+                                                            onClick={() => isDriveLink ? window.open(String(img).trim(), '_blank', 'noopener,noreferrer') : null} 
+                                                            className={`px-3 py-1.5 ${isDriveLink ? 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100' : 'bg-gray-100 text-gray-500 border-gray-200'} text-[11px] font-bold rounded-lg border flex items-center gap-1 cursor-pointer transition-colors`}
+                                                        >
+                                                            <i className={isDriveLink ? "ph ph-link" : "ph ph-image"}></i> 
+                                                            {isDriveLink ? `เปิด Drive รูปที่ ${idx + 1}` : `ล้มเหลว (รูปที่ ${idx + 1})`}
+                                                        </button>
+                                                    )
+                                                }
+                                                return null;
+                                            })}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div><h5 className="text-sm font-bold text-gray-700 mb-1">รายละเอียด</h5><p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border whitespace-pre-line">{ticket?.details}</p></div>
+                            
+                            {!isSimpleStatus && (
+                                <div className="border-t pt-4 mt-2">
+                                    <h5 className="text-sm font-bold text-gray-700 mb-2">อัปเดตสถานะการทำงาน</h5>
+                                    <div className="flex gap-2">
+                                        <button type="button" onClick={() => {onUpdateStatus(ticket?.id, 'investigating'); onClose();}} className="flex-1 py-2 text-xs rounded-lg font-bold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors">กำลังตรวจสอบ</button>
+                                        <button type="button" onClick={() => {onUpdateStatus(ticket?.id, 'resolved'); onClose();}} className="flex-1 py-2 text-xs rounded-lg font-bold bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors">ดำเนินการเสร็จสิ้น</button>
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="border-t pt-4 mt-2">
+                                <button type="button" onClick={() => onDeleteClick(ticket?.id)} className="w-full py-2.5 text-sm rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
+                                    <i className="ph ph-trash text-lg"></i> ลบข้อมูลนี้
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
         const AdminDashboard = ({ setCurrentView, setIsAdminAuth, tickets, updateTicketStatus, deleteTicket, settings, setSettings, showAlert }) => {
             const [adminTab, setAdminTab] = useState('overview'); 
             const [selectedTicket, setSelectedTicket] = useState(null);
@@ -775,7 +848,6 @@
             const [editSettings, setEditSettings] = useState(settings || {});
             const [passwords, setPasswords] = useState({ old: '', new: '' });
             const [confirmDeleteId, setConfirmDeleteId] = useState(null);
-            const [previewImage, setPreviewImage] = useState(null);
 
             const [isSavingPopup, setIsSavingPopup] = useState(false);
             const [isSavingRooms, setIsSavingRooms] = useState(false);
@@ -892,94 +964,8 @@
                 setIsChangingPass(false); 
             };
 
-            const ImageViewer = () => {
-                if (!previewImage) return null;
-                return (
-                    <div className="fixed inset-0 z-[300] flex items-center justify-center bg-black/95 p-4 animate-in fade-in" onClick={() => setPreviewImage(null)}>
-                        <button className="absolute top-4 right-4 text-white p-3 rounded-full bg-white/10 hover:bg-white/30 transition-colors backdrop-blur-md">
-                            <i className="ph ph-x text-2xl font-bold"></i>
-                        </button>
-                        <img src={previewImage} className="max-w-full max-h-full object-contain rounded-lg shadow-2xl scale-in-center" onClick={e => e.stopPropagation()} />
-                    </div>
-                );
-            };
-
-            const TicketDetailModal = ({ ticket, onClose, onUpdateStatus, onDeleteClick }) => {
-                if (!ticket) return null;
-                const isSimpleStatus = ['feeling', 'idea', 'feedback'].includes(ticket.type);
-
-                return (
-                    <div className="fixed inset-0 z-[60] flex items-center justify-center modal-overlay p-4 animate-in fade-in">
-                        <div className="bg-white rounded-2xl w-full max-w-md max-h-[90vh] overflow-y-auto shadow-2xl relative animate-in zoom-in-95">
-                            <div className="sticky top-0 bg-white border-b px-5 py-4 flex justify-between items-center z-10">
-                                <h3 className="font-bold text-lg">จัดการเรื่องแจ้ง</h3>
-                                <button type="button" onClick={onClose} className="p-1 bg-gray-100 rounded-full hover:bg-gray-200"><i className="ph ph-x text-lg"></i></button>
-                            </div>
-                            
-                            <div className="p-5 space-y-4">
-                                <div className="flex justify-between items-start">
-                                    <div><p className="text-xs text-gray-500 mb-1">ID: <span className="font-mono">{ticket?.id}</span></p><h4 className="font-bold text-gray-800">{ticket?.title}</h4></div>
-                                    <span className={`px-2 py-1 rounded text-[10px] font-bold ${ticket?.status === 'resolved' || isSimpleStatus ? 'bg-green-100 text-green-700' : ticket?.status === 'investigating' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>
-                                        {isSimpleStatus ? 'รับทราบแล้ว' : ticket?.status === 'resolved' ? 'เสร็จสิ้น' : ticket?.status === 'investigating' ? 'ตรวจสอบ' : 'รอดำเนินการ'}
-                                    </span>
-                                </div>
-                                <div className="grid grid-cols-2 gap-3 text-xs bg-gray-50 p-3 rounded-lg border">
-                                    <div><span className="text-gray-400 block">วันที่</span> <span className="font-medium text-gray-800">{ticket?.date}</span></div>
-                                    <div><span className="text-gray-400 block">หมวดหมู่</span> {ticket?.category}</div>
-                                    <div className="col-span-2"><span className="text-gray-400 block">ผู้แจ้ง</span> {ticket?.isAnonymous ? 'ไม่ระบุตัวตน' : 'ระบุตัวตน'}</div>
-                                    {ticket?.contactInfo && ticket.contactInfo !== '-' && <div className="col-span-2"><span className="text-gray-400 block">ข้อมูลติดต่อ</span> <span className="whitespace-pre-line block mt-1 text-gray-700 font-medium">{ticket.contactInfo}</span></div>}
-                                    
-                                    {ticket?.images && Array.isArray(ticket.images) && ticket.images.length > 0 && (
-                                        <div className="col-span-2 mt-2">
-                                            <span className="text-gray-400 block mb-2">รูปภาพแนบ</span>
-                                            <div className="flex gap-2 flex-wrap">
-                                                {ticket.images.map((img, idx) => {
-                                                    if(img && String(img).trim() !== '') {
-                                                        const isDriveLink = img.includes('drive.google.com');
-                                                        return (
-                                                            <button 
-                                                                type="button"
-                                                                key={idx} 
-                                                                onClick={() => isDriveLink ? window.open(img.trim(), '_blank', 'noopener,noreferrer') : setPreviewImage(img.trim())} 
-                                                                className="px-3 py-1.5 bg-blue-50 text-blue-600 text-[11px] font-bold rounded-lg border border-blue-200 hover:bg-blue-100 flex items-center gap-1 cursor-pointer transition-colors"
-                                                            >
-                                                                <i className={isDriveLink ? "ph ph-link" : "ph ph-image"}></i> 
-                                                                {isDriveLink ? `เปิด Drive รูปที่ ${idx + 1}` : `ดูรูปที่ ${idx + 1}`}
-                                                            </button>
-                                                        )
-                                                    }
-                                                    return null;
-                                                })}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                                <div><h5 className="text-sm font-bold text-gray-700 mb-1">รายละเอียด</h5><p className="text-sm text-gray-600 bg-gray-50 p-3 rounded-lg border whitespace-pre-line">{ticket?.details}</p></div>
-                                
-                                {!isSimpleStatus && (
-                                    <div className="border-t pt-4 mt-2">
-                                        <h5 className="text-sm font-bold text-gray-700 mb-2">อัปเดตสถานะการทำงาน</h5>
-                                        <div className="flex gap-2">
-                                            <button type="button" onClick={() => {onUpdateStatus(ticket?.id, 'investigating'); showAlert('ปรับสถานะเป็น "กำลังตรวจสอบ" แล้ว', 'success'); setSelectedTicket(null);}} className="flex-1 py-2 text-xs rounded-lg font-bold bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 transition-colors">กำลังตรวจสอบ</button>
-                                            <button type="button" onClick={() => {onUpdateStatus(ticket?.id, 'resolved'); showAlert('ปรับสถานะเป็น "เสร็จสิ้น" แล้ว', 'success'); setSelectedTicket(null);}} className="flex-1 py-2 text-xs rounded-lg font-bold bg-green-50 text-green-600 border border-green-200 hover:bg-green-100 transition-colors">ดำเนินการเสร็จสิ้น</button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="border-t pt-4 mt-2">
-                                    <button type="button" onClick={() => onDeleteClick(ticket?.id)} className="w-full py-2.5 text-sm rounded-lg font-bold text-red-600 bg-red-50 hover:bg-red-100 flex items-center justify-center gap-2 transition-colors">
-                                        <i className="ph ph-trash text-lg"></i> ลบข้อมูลนี้
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                );
-            };
-
             return (
                 <div className="flex h-screen bg-[#F3F4F6] w-full absolute inset-0 z-50">
-                    <ImageViewer />
                     
                     <div className="w-64 bg-white border-r hidden md:flex flex-col shadow-sm">
                         <div className="p-4 border-b flex items-center gap-3">
@@ -1145,7 +1131,21 @@
                             )}
                         </div>
                         
-                        {renderTicketModal()}
+                        {/* ✅ แก้ไขจุดที่ทำให้หน้าจอขาวตรงนี้ครับ เรียกหน้าต่างขึ้นมาได้แล้ว */}
+                        {selectedTicket && (
+                            <TicketDetailModal 
+                                ticket={selectedTicket} 
+                                onClose={() => setSelectedTicket(null)} 
+                                onUpdateStatus={(id, status) => {
+                                    updateTicketStatus(id, status);
+                                    showAlert(`อัปเดตสถานะเป็น "${status === 'resolved' ? 'เสร็จสิ้น' : 'กำลังตรวจสอบ'}" แล้ว`, 'success');
+                                }} 
+                                onDeleteClick={(id) => {
+                                    setConfirmDeleteId(id);
+                                    setSelectedTicket(null);
+                                }} 
+                            />
+                        )}
 
                         <ConfirmModal 
                             isOpen={!!confirmDeleteId}
@@ -1155,7 +1155,6 @@
                             onConfirm={() => {
                                 deleteTicket(confirmDeleteId);
                                 setConfirmDeleteId(null);
-                                setSelectedTicket(null);
                             }}
                         />
                     </div>
